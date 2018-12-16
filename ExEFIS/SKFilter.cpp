@@ -149,6 +149,7 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 	
 		if (_initialized)
 		{	
+			//Check if the gyro has been updated
 			if (gyroUpdated_) {	
 		
 				/* Calc Integral */
