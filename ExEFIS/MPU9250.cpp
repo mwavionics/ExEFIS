@@ -16,14 +16,6 @@
 
 #define delay(x) usleep(x*1000)
 
-// One ifdef needed to support delay() cross-platform
-#if defined(ARDUINO)
-#include <Arduino.h>
-#else
-//#include <wiringPi.h>
-//extern void delay(uint32_t msec);
-#endif
-
 MPU9250::MPU9250(ByteTransfer * bt)
 {
     _mpu = bt;

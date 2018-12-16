@@ -1,6 +1,6 @@
-/*  Header for WiringPi implmentations of ByteTransfer class
+/*  Header for implmentations of ByteTransfer class
  *
- *  Copyright 2018 Simon D. Levy
+ *  Copyright 2018 Simon D. Levy - modified for non wiring pi use
  *  
  *  Library may be used freely and without limit with attribution.
  */

@@ -14,27 +14,6 @@ RotaryEncoder::RotaryEncoder(int a, int b, int c, int index)
 	pin_b = b;
 	pin_c = c;	
 	
-	
-	//pinMode(pin_a, INPUT);
-	//pinMode(pin_b, INPUT);
-	//pinMode(pin_c, INPUT);
-	
-	//pullUpDnControl(pin_a, PUD_UP);
-	//pullUpDnControl(pin_b, PUD_UP);
-	//pullUpDnControl(pin_c, PUD_UP);
-	
-//	wiringPiISR(pin_a, INT_EDGE_BOTH, RotaryEncoder::eventHandler);
-//	wiringPiISR(pin_b, INT_EDGE_BOTH, RotaryEncoder::eventHandler);
-//	wiringPiISR(pin_c, INT_EDGE_BOTH, RotaryEncoder::pressHandler);
-
-	
-	//bcm2835_gpio_len(pin_a);
-	//bcm2835_gpio_hen(pin_a);
-	//bcm2835_gpio_len(pin_b);
-	//bcm2835_gpio_hen(pin_b);
-	//bcm2835_gpio_len(pin_c);
-	//bcm2835_gpio_hen(pin_c);
-	
 	int ret = gpioSetISRFunc((unsigned)pin_a, EITHER_EDGE, 0, (gpioISRFunc_t)RotaryEncoder::eventHandler);
 	ret = gpioSetISRFunc(pin_b, EITHER_EDGE, 0, (gpioISRFunc_t)RotaryEncoder::eventHandler);
 	ret = gpioSetISRFunc(pin_c, EITHER_EDGE, 0, (gpioISRFunc_t)RotaryEncoder::pressHandler);

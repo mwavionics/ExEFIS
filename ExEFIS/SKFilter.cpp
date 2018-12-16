@@ -1,6 +1,5 @@
 #include "SKFilter.h"
 #include "Vector.h"
-//#include "wiringPi.h"
 #include "math.h"
 #include <QDebug>
 
