@@ -1,6 +1,11 @@
 #pragma once
 #include <unistd.h>
 
+
+/*
+ *Class for the Rotory Encoder for the front of the device
+ *Natively, this class supports 2 encoders even though the 3.5 only has 1
+ **/
 class RotaryEncoder
 {
 public:
