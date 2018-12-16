@@ -51,6 +51,7 @@ OBJECTS_DIR   = Debug/
 SOURCES       = adhrs.cpp \
 		airspeed.cpp \
 		altitude.cpp \
+		candriver.cpp \
 		directional_gyro.cpp \
 		ExEFIS.cpp \
 		horizon_instrument.cpp \
@@ -82,6 +83,7 @@ SOURCES       = adhrs.cpp \
 OBJECTS       = Debug/adhrs.o \
 		Debug/airspeed.o \
 		Debug/altitude.o \
+		Debug/candriver.o \
 		Debug/directional_gyro.o \
 		Debug/ExEFIS.o \
 		Debug/horizon_instrument.o \
@@ -115,6 +117,7 @@ DIST          =  adhrs.h \
 		airspeed.h \
 		altitude.h \
 		ByteTransfer.h \
+		candriver.h \
 		directional_gyro.h \
 		horizon_instrument.h \
 		HRS_9250.h \
@@ -140,6 +143,7 @@ DIST          =  adhrs.h \
 		DiagWidget.h adhrs.cpp \
 		airspeed.cpp \
 		altitude.cpp \
+		candriver.cpp \
 		directional_gyro.cpp \
 		ExEFIS.cpp \
 		horizon_instrument.cpp \
@@ -348,8 +352,8 @@ distdir: FORCE
 	@if not exist $(DISTDIR) mkdir $(DISTDIR) & if not exist $(DISTDIR) exit 1
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents img.qrc $(DISTDIR)/
-	$(COPY_FILE) --parents adhrs.h airspeed.h altitude.h ByteTransfer.h directional_gyro.h horizon_instrument.h HRS_9250.h hsc_pressure.h knobs.h Matrix.h MenuWidget.h MPU9250.h panelWidget.h Quaternion.h quaternionFilters.h reticle.h RotaryEncoder.h round_instrument.h SKFilter.h slipskid_instrument.h spidriver.h SplashWidget.h StatusWidget.h Vector.h vertical_instrument.h PiTransfer.h DiagWidget.h $(DISTDIR)/
-	$(COPY_FILE) --parents adhrs.cpp airspeed.cpp altitude.cpp directional_gyro.cpp ExEFIS.cpp horizon_instrument.cpp HRS_9250.cpp hsc_pressure.cpp knobs.cpp DiagWidget.cpp MenuWidget.cpp MPU9250.cpp panelWidget.cpp reticle.cpp RotaryEncoder.cpp round_instrument.cpp SKFilter.cpp slipskid_instrument.cpp spidriver.cpp SplashWidget.cpp StatusWidget.cpp vertical_instrument.cpp PiTransfer.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents adhrs.h airspeed.h altitude.h ByteTransfer.h candriver.h directional_gyro.h horizon_instrument.h HRS_9250.h hsc_pressure.h knobs.h Matrix.h MenuWidget.h MPU9250.h panelWidget.h Quaternion.h quaternionFilters.h reticle.h RotaryEncoder.h round_instrument.h SKFilter.h slipskid_instrument.h spidriver.h SplashWidget.h StatusWidget.h Vector.h vertical_instrument.h PiTransfer.h DiagWidget.h $(DISTDIR)/
+	$(COPY_FILE) --parents adhrs.cpp airspeed.cpp altitude.cpp candriver.cpp directional_gyro.cpp ExEFIS.cpp horizon_instrument.cpp HRS_9250.cpp hsc_pressure.cpp knobs.cpp DiagWidget.cpp MenuWidget.cpp MPU9250.cpp panelWidget.cpp reticle.cpp RotaryEncoder.cpp round_instrument.cpp SKFilter.cpp slipskid_instrument.cpp spidriver.cpp SplashWidget.cpp StatusWidget.cpp vertical_instrument.cpp PiTransfer.cpp $(DISTDIR)/
 
 
 clean:compiler_clean 
@@ -490,6 +494,9 @@ Debug/airspeed.o: airspeed.cpp
 
 Debug/altitude.o: altitude.cpp altitude.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Debug/altitude.o altitude.cpp
+
+Debug/candriver.o: candriver.cpp candriver.h
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Debug/candriver.o candriver.cpp
 
 Debug/directional_gyro.o: directional_gyro.cpp directional_gyro.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Debug/directional_gyro.o directional_gyro.cpp

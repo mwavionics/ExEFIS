@@ -102,6 +102,9 @@
     <ClCompile Include="PiTransfer.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="candriver.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ExEFIS.pro" />
@@ -189,6 +192,9 @@
       <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="PiTransfer.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="candriver.h">
       <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>
