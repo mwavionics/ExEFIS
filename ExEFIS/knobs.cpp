@@ -1,6 +1,5 @@
 #include "knobs.h"
 #include "RotaryEncoder.h"
-#include <wiringPi.h>
 
 /* CAN socket stuff*/
 #include <linux/can.h>

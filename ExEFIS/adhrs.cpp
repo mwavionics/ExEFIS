@@ -9,8 +9,6 @@
 #include <QDebug>
 #include <QTimer>
 #include <QWidget>
-#include "wiringPi.h"
-
 
 
 

@@ -9,7 +9,6 @@
 #include <QGridLayout>
 #include <QDebug>
 #include <math.h>
-//#include "wiringPi.h"
 
 int counter = 0;
 int mode = 0;
