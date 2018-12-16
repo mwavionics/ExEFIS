@@ -1,0 +1,134 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{CCBC25A3-3088-43AE-B26D-C7F3D3C3B24A}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Label="VisualGDBPackageDefinitions">
+    <ToolchainID>com.visualgdb.raspberry_pi</ToolchainID>
+    <ToolchainVersion>6.3.0/7.12/r1</ToolchainVersion>
+  </PropertyGroup>
+  <ImportGroup Label="VisualGDBFindComponents">
+    <Import Project="$(LOCALAPPDATA)\VisualGDB\FindComponents.props" />
+  </ImportGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <NMakeIncludeSearchPath>$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\lib\arm-linux-gnueabihf\qt5\mkspecs\arm-linux-gnueabihf;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include\arm-linux-gnueabihf\qt5;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include\arm-linux-gnueabihf\qt5\QtWidgets;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include\arm-linux-gnueabihf\qt5\QtGui;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include\arm-linux-gnueabihf\qt5\QtCore;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\include\c++\6;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\include\c++\6\backward;$(TOOLCHAIN_ROOT)\lib\gcc\arm-linux-gnueabihf\6\include;$(TOOLCHAIN_ROOT)\lib\gcc\arm-linux-gnueabihf\6\include-fixed;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\include;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\include\arm-linux-gnueabihf\c++\6;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include\arm-linux-gnueabihf;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include;Debug;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\include\c++\6\java\util;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include\weston;$(ProjectDir);$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes>$(ProjectDir)\gcc_Debug.h;$(VISUALGDB_DIR)\gcc_compat.h;$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeBuildCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /build "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeBuildCommandLine>
+    <NMakeCleanCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /clean "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeCleanCommandLine>
+    <NMakeReBuildCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /rebuild "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeReBuildCommandLine>
+    <NMakeOutput>$(ProjectDir)ExEFIS-Debug.vgdbsettings</NMakeOutput>
+    <IncludePath />
+    <ReferencePath />
+    <LibraryPath />
+    <NMakePreprocessorDefinitions>__VisualGDB_CFG_Debug;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <NMakeIncludeSearchPath>$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\lib\arm-linux-gnueabihf\qt5\mkspecs\arm-linux-gnueabihf;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include\arm-linux-gnueabihf\qt5;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include\arm-linux-gnueabihf\qt5\QtWidgets;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include\arm-linux-gnueabihf\qt5\QtGui;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include\arm-linux-gnueabihf\qt5\QtCore;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\include\c++\6;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\include\c++\6\backward;$(TOOLCHAIN_ROOT)\lib\gcc\arm-linux-gnueabihf\6\include;$(TOOLCHAIN_ROOT)\lib\gcc\arm-linux-gnueabihf\6\include-fixed;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\include;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\include\arm-linux-gnueabihf\c++\6;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include\arm-linux-gnueabihf;$(TOOLCHAIN_ROOT)\arm-linux-gnueabihf\sysroot\usr\include;Release;$(NMakeIncludeSearchPath)</NMakeIncludeSearchPath>
+    <NMakeForcedIncludes>$(ProjectDir)\gcc_Release.h;$(VISUALGDB_DIR)\gcc_compat.h;$(NMakeForcedIncludes)</NMakeForcedIncludes>
+    <NMakeBuildCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /build "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeBuildCommandLine>
+    <NMakeCleanCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /clean "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeCleanCommandLine>
+    <NMakeReBuildCommandLine>"$(VISUALGDB_DIR)\VisualGDB.exe" /rebuild "$(ProjectPath)" "/solution:$(SolutionPath)"  "/config:$(Configuration)" "/platform:$(Platform)"</NMakeReBuildCommandLine>
+    <NMakeOutput>$(ProjectDir)ExEFIS-Release.vgdbsettings</NMakeOutput>
+    <IncludePath />
+    <ReferencePath />
+    <LibraryPath />
+    <NMakePreprocessorDefinitions>__VisualGDB_CFG_Release;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ItemGroup>
+    <ClCompile Include="adhrs.cpp" />
+    <ClCompile Include="airspeed.cpp" />
+    <ClCompile Include="altitude.cpp" />
+    <ClCompile Include="directional_gyro.cpp" />
+    <ClCompile Include="ExEFIS.cpp" />
+    <ClCompile Include="horizon_instrument.cpp" />
+    <ClCompile Include="HRS_9250.cpp" />
+    <ClCompile Include="hsc_pressure.cpp" />
+    <ClCompile Include="knobs.cpp" />
+    <ClCompile Include="DiagWidget.cpp" />
+    <ClCompile Include="MenuWidget.cpp" />
+    <ClCompile Include="MPU9250.cpp" />
+    <ClCompile Include="panelWidget.cpp" />
+    <ClCompile Include="reticle.cpp" />
+    <ClCompile Include="RotaryEncoder.cpp" />
+    <ClCompile Include="round_instrument.cpp" />
+    <ClCompile Include="SKFilter.cpp" />
+    <ClCompile Include="slipskid_instrument.cpp" />
+    <ClCompile Include="spidriver.cpp" />
+    <ClCompile Include="SplashWidget.cpp" />
+    <ClCompile Include="StatusWidget.cpp" />
+    <ClCompile Include="vertical_instrument.cpp" />
+    <ClCompile Include="PiTransfer.cpp" />
+    <ClInclude Include="adhrs.h" />
+    <ClInclude Include="airspeed.h" />
+    <ClInclude Include="altitude.h" />
+    <ClInclude Include="ByteTransfer.h" />
+    <ClInclude Include="directional_gyro.h" />
+    <ClInclude Include="horizon_instrument.h" />
+    <ClInclude Include="HRS_9250.h" />
+    <ClInclude Include="hsc_pressure.h" />
+    <ClInclude Include="knobs.h" />
+    <ClInclude Include="Matrix.h" />
+    <ClInclude Include="MenuWidget.h" />
+    <ClInclude Include="MPU9250.h" />
+    <ClInclude Include="panelWidget.h" />
+    <ClInclude Include="Quaternion.h" />
+    <ClInclude Include="quaternionFilters.h" />
+    <ClInclude Include="reticle.h" />
+    <ClInclude Include="RotaryEncoder.h" />
+    <ClInclude Include="round_instrument.h" />
+    <ClInclude Include="SKFilter.h" />
+    <ClInclude Include="slipskid_instrument.h" />
+    <ClInclude Include="spidriver.h" />
+    <ClInclude Include="SplashWidget.h" />
+    <ClInclude Include="StatusWidget.h" />
+    <ClInclude Include="Vector.h" />
+    <ClInclude Include="vertical_instrument.h" />
+    <ClInclude Include="PiTransfer.h" />
+    <None Include="img.qrc" />
+    <ClInclude Include="DiagWidget.h" />
+    <None Include="ExEFIS.pro" />
+    <None Include="debug.pro" />
+    <None Include="release.pro" />
+    <None Include="ExEFIS-Debug.vgdbsettings" />
+    <None Include="ExEFIS-Release.vgdbsettings" />
+  </ItemGroup>
+</Project>

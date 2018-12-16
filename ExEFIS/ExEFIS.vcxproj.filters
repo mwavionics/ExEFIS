@@ -1,0 +1,195 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source files">
+      <UniqueIdentifier>{96a2dc61-ab70-4657-8471-261d9649411a}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header files">
+      <UniqueIdentifier>{2b98c139-81ec-480f-854a-171707ca141e}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource files">
+      <UniqueIdentifier>{5583d9bc-09af-45db-ba97-952504c7a4b1}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="QMake Project files">
+      <UniqueIdentifier>{c7813be6-8467-4bbf-bd5d-0b812631c9b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="VisualGDB settings">
+      <UniqueIdentifier>{ec1a8ddb-dd26-4c51-88a1-3f1317ca12ae}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ExEFIS.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <None Include="debug.pro">
+      <Filter>QMake Project files</Filter>
+    </None>
+    <None Include="release.pro">
+      <Filter>QMake Project files</Filter>
+    </None>
+    <None Include="ExEFIS-Debug.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <None Include="ExEFIS-Release.vgdbsettings">
+      <Filter>VisualGDB settings</Filter>
+    </None>
+    <ClCompile Include="SplashWidget.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="panelWidget.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="horizon_instrument.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="adhrs.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="knobs.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="RotaryEncoder.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="hsc_pressure.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="DiagWidget.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="vertical_instrument.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="reticle.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="slipskid_instrument.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="airspeed.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="altitude.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="directional_gyro.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="StatusWidget.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="MPU9250.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="HRS_9250.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="round_instrument.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="MenuWidget.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="SKFilter.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="spidriver.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="PiTransfer.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ExEFIS.pro" />
+    <None Include="img.qrc">
+      <Filter>Resource files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SplashWidget.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="panelWidget.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="horizon_instrument.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="adhrs.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="Quaternion.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="Matrix.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="hsc_pressure.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="knobs.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="RotaryEncoder.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="DiagWidget.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="vertical_instrument.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="reticle.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="slipskid_instrument.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="airspeed.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="altitude.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="directional_gyro.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="StatusWidget.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="MPU9250.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="ByteTransfer.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="HRS_9250.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="quaternionFilters.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="round_instrument.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuWidget.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="SKFilter.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="spidriver.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="PiTransfer.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
