@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QScreen>
 #include <QThread>
+#include <QDebug>
 #include <iostream>
 #include <pigpio.h>
 
@@ -30,7 +31,7 @@ int main(int argc, char *argv[])
 	QRect  screenGeometry = screen->geometry();
 	
 	/* Now that we're using pigpio, initialize the library */
-	if (gpioInitialise() < 0) printf("ERROR: Can't initialize");
+	if (gpioInitialise() < 0) qDebug("ERROR: Can't initialize");
 	
 	knobs *k = new knobs();	
 	adhrs *ad = new adhrs();	

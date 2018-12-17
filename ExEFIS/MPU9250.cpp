@@ -10,9 +10,10 @@
  */
 
 #include "MPU9250.h"
-#include <unistd.h>
+#include <unistd.h>;
+#include <stdio.h>
 #include <math.h>
-#include <QDebug>
+
 
 #define delay(x) usleep(x*1000)
 

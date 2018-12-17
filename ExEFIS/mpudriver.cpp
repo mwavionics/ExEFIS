@@ -1,11 +1,10 @@
 #include <unistd.h>
 #include <pigpio.h>
-#include <QDebug>
 #include <QThread>
 #include <math.h>
 #include <sys/time.h>
 
-#include "HRS_9250.h"
+#include "mpudriver.h"
 #include "Vector.h"
 #include "PiTransfer.h"
 #include "MPU9250.h"
@@ -100,7 +99,7 @@ static float gyroBias[3], accelBias[3] = { 0, 0, 0 },
 
 //static float gyroBias[3] = {, accelBias[3], magBias[3] = { 0, 0, 0 }, magScale[3] = { 1, 1, 1 }; 
 
-HRS_9250::HRS_9250()
+mpudriver::mpudriver()
 {
 	gettimeofday(&start, NULL);
 	ax = ay = az = gx = gy = gz = mx = my = mz = 0;
@@ -120,8 +119,8 @@ HRS_9250::HRS_9250()
 	printf("Created MPU9250 9-axis motion sensor...\n");	
 }
 
-HRS_9250::HRS_9250(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale)
-	: HRS_9250()
+mpudriver::mpudriver(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale)
+	: mpudriver()
 {	
 	pGyroBias = ppGyroBias; 
 	pAccelBias = ppAccelBias; 
@@ -129,7 +128,7 @@ HRS_9250::HRS_9250(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, floa
 	pMagScale = ppMagScale;
 }
 
-int HRS_9250::Init(bool doSelfTest, bool doCalibration, bool doMagCalibration)
+int mpudriver::Init(bool doSelfTest, bool doCalibration, bool doMagCalibration)
 {
 	int status = 0;	
 	
@@ -140,14 +139,14 @@ int HRS_9250::Init(bool doSelfTest, bool doCalibration, bool doMagCalibration)
 
 	sensorID = dev->getMPU9250ID();
 	
-	printf("MPU9250  I AM 0x%02X  I should be 0x71\n", sensorID);
+	qDebug("MPU9250  I AM 0x%02X  I should be 0x71\n", sensorID);
 	// WHO_AM_I should always be 0x71 for MPU9250, 0x73 for MPU9255 
 	delay(1000);	
 	
 	//73 for Dev Board, 71 for production
 	if (sensorID == 0x71) {
     
-		printf("MPU9250 is online...\n");
+		qDebug("MPU9250 is online...\n");
 
 		dev->resetMPU9250();      // start by resetting MPU9250
 
@@ -234,7 +233,7 @@ int HRS_9250::Init(bool doSelfTest, bool doCalibration, bool doMagCalibration)
 		
 		
 		gpioSetMode(intPin, PI_INPUT);
-		gpioSetISRFunc(intPin, RISING_EDGE, 200, HRS_9250::imuInterruptHander);
+		gpioSetISRFunc(intPin, RISING_EDGE, 200, mpudriver::imuInterruptHander);
 	}
 	
 	else {
@@ -247,48 +246,48 @@ int HRS_9250::Init(bool doSelfTest, bool doCalibration, bool doMagCalibration)
 }
 
 
-HRS_9250::~HRS_9250()
+mpudriver::~mpudriver()
 {
 }
 
 
-int HRS_9250::GetAccelStatus(void)
-{
-	return 1;
-}
-
-
-int HRS_9250::GetMagStatus(void)
+int mpudriver::GetAccelStatus(void)
 {
 	return 1;
 }
 
 
-int HRS_9250::GetGyrStatus(void)
+int mpudriver::GetMagStatus(void)
 {
 	return 1;
 }
 
 
-int HRS_9250::Get9250Info(INFO_9250* info)
+int mpudriver::GetGyrStatus(void)
 {
 	return 1;
 }
 
 
-int HRS_9250::SetCalibration(HRS_CAL* cal)
+int mpudriver::Get9250Info(INFO_9250* info)
 {
 	return 1;
 }
 
 
-int HRS_9250::GetCalibration(HRS_CAL* cal)
+int mpudriver::SetCalibration(MPU_CAL* cal)
 {
 	return 1;
 }
 
 
-imu::Vector<3> HRS_9250::GetEuler(int* status)
+int mpudriver::GetCalibration(MPU_CAL* cal)
+{
+	return 1;
+}
+
+
+imu::Vector<3> mpudriver::GetEuler(int* status)
 {
 	*status = 0;
 	float qw = 0, qx = 0, qy = 0, qz = 0;
@@ -307,7 +306,7 @@ imu::Vector<3> HRS_9250::GetEuler(int* status)
 	return imu::Quaternion(qw, qx, qy, qz).toEuler();
 }
 
-float HRS_9250::getRoll(void)
+float mpudriver::getRoll(void)
 {
 	float ret = 0.0f;
 	for (int i = 0; i < buffersize; i++)
@@ -318,7 +317,7 @@ float HRS_9250::getRoll(void)
 	return ret;
 }
 
-float HRS_9250::getPitch(void)
+float mpudriver::getPitch(void)
 {
 	float ret = 0.0f;
 	for (int i = 0; i < buffersize; i++)
@@ -329,18 +328,18 @@ float HRS_9250::getPitch(void)
 	return ret;
 }
 
-float HRS_9250::getHeading(void)
+float mpudriver::getHeading(void)
 {
 	return filter.getHeading_rad();
 }
 
-imu::Vector<3> HRS_9250::GetAccelerometer(int*status)
+imu::Vector<3> mpudriver::GetAccelerometer(int*status)
 {
 	*status = 0;
 	return (imu::Vector<3>((double)ax, (double)ay, (double)az));
 }
 
-float HRS_9250::GetYAccelFiltered(int* status)
+float mpudriver::GetYAccelFiltered(int* status)
 {
 	*status = 0;
 	float ret = 0.0f;
@@ -355,7 +354,7 @@ float HRS_9250::GetYAccelFiltered(int* status)
 
 static bool inInt = false;
 
-void HRS_9250::imuInterruptHander(int gpio, int level, uint32_t tick)
+void mpudriver::imuInterruptHander(int gpio, int level, uint32_t tick)
 {
 	if (!inInt)
 	{
@@ -368,7 +367,7 @@ void HRS_9250::imuInterruptHander(int gpio, int level, uint32_t tick)
 
 
 
-void HRS_9250::RunFilter(void)
+void mpudriver::RunFilter(void)
 {
 	static int16_t MPU9250Data[7];     // used to read all 14 bytes at once from the MPU9250 accel/gyro
 	static int16_t magCount[3];         // Stores the 16-bit signed magnetometer sensor output
@@ -518,7 +517,7 @@ void HRS_9250::RunFilter(void)
 
 
 
-void HRS_9250::resetAlgorithm(void)
+void mpudriver::resetAlgorithm(void)
 {
 	ax = ay = az = gx = gy = gz = mx = my = mz = 0;
 }

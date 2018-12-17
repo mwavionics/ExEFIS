@@ -55,7 +55,7 @@ SOURCES       = adhrs.cpp \
 		directional_gyro.cpp \
 		ExEFIS.cpp \
 		horizon_instrument.cpp \
-		HRS_9250.cpp \
+		mpudriver.cpp \
 		hsc_pressure.cpp \
 		knobs.cpp \
 		DiagWidget.cpp \
@@ -87,7 +87,7 @@ OBJECTS       = Debug/adhrs.o \
 		Debug/directional_gyro.o \
 		Debug/ExEFIS.o \
 		Debug/horizon_instrument.o \
-		Debug/HRS_9250.o \
+		Debug/mpudriver.o \
 		Debug/hsc_pressure.o \
 		Debug/knobs.o \
 		Debug/DiagWidget.o \
@@ -120,7 +120,7 @@ DIST          =  adhrs.h \
 		candriver.h \
 		directional_gyro.h \
 		horizon_instrument.h \
-		HRS_9250.h \
+		mpudriver.h \
 		hsc_pressure.h \
 		knobs.h \
 		Matrix.h \
@@ -147,7 +147,7 @@ DIST          =  adhrs.h \
 		directional_gyro.cpp \
 		ExEFIS.cpp \
 		horizon_instrument.cpp \
-		HRS_9250.cpp \
+		mpudriver.cpp \
 		hsc_pressure.cpp \
 		knobs.cpp \
 		DiagWidget.cpp \
@@ -352,8 +352,8 @@ distdir: FORCE
 	@if not exist $(DISTDIR) mkdir $(DISTDIR) & if not exist $(DISTDIR) exit 1
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents img.qrc $(DISTDIR)/
-	$(COPY_FILE) --parents adhrs.h airspeed.h altitude.h ByteTransfer.h candriver.h directional_gyro.h horizon_instrument.h HRS_9250.h hsc_pressure.h knobs.h Matrix.h MenuWidget.h MPU9250.h panelWidget.h Quaternion.h quaternionFilters.h reticle.h RotaryEncoder.h round_instrument.h SKFilter.h slipskid_instrument.h spidriver.h SplashWidget.h StatusWidget.h Vector.h vertical_instrument.h PiTransfer.h DiagWidget.h $(DISTDIR)/
-	$(COPY_FILE) --parents adhrs.cpp airspeed.cpp altitude.cpp candriver.cpp directional_gyro.cpp ExEFIS.cpp horizon_instrument.cpp HRS_9250.cpp hsc_pressure.cpp knobs.cpp DiagWidget.cpp MenuWidget.cpp MPU9250.cpp panelWidget.cpp reticle.cpp RotaryEncoder.cpp round_instrument.cpp SKFilter.cpp slipskid_instrument.cpp spidriver.cpp SplashWidget.cpp StatusWidget.cpp vertical_instrument.cpp PiTransfer.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents adhrs.h airspeed.h altitude.h ByteTransfer.h candriver.h directional_gyro.h horizon_instrument.h mpudriver.h hsc_pressure.h knobs.h Matrix.h MenuWidget.h MPU9250.h panelWidget.h Quaternion.h quaternionFilters.h reticle.h RotaryEncoder.h round_instrument.h SKFilter.h slipskid_instrument.h spidriver.h SplashWidget.h StatusWidget.h Vector.h vertical_instrument.h PiTransfer.h DiagWidget.h $(DISTDIR)/
+	$(COPY_FILE) --parents adhrs.cpp airspeed.cpp altitude.cpp candriver.cpp directional_gyro.cpp ExEFIS.cpp horizon_instrument.cpp mpudriver.cpp hsc_pressure.cpp knobs.cpp DiagWidget.cpp MenuWidget.cpp MPU9250.cpp panelWidget.cpp reticle.cpp RotaryEncoder.cpp round_instrument.cpp SKFilter.cpp slipskid_instrument.cpp spidriver.cpp SplashWidget.cpp StatusWidget.cpp vertical_instrument.cpp PiTransfer.cpp $(DISTDIR)/
 
 
 clean:compiler_clean 
@@ -405,7 +405,7 @@ Debug/moc_panelWidget.cpp: horizon_instrument.h \
 		MenuWidget.h \
 		adhrs.h \
 		hsc_pressure.h \
-		HRS_9250.h \
+		mpudriver.h \
 		Quaternion.h \
 		matrix.h \
 		vector.h \
@@ -429,7 +429,7 @@ Debug/moc_round_instrument.cpp: round_instrument.h \
 
 Debug/moc_SplashWidget.cpp: adhrs.h \
 		hsc_pressure.h \
-		HRS_9250.h \
+		mpudriver.h \
 		Quaternion.h \
 		matrix.h \
 		vector.h \
@@ -449,7 +449,7 @@ Debug/moc_vertical_instrument.cpp: vertical_instrument.h \
 
 Debug/moc_DiagWidget.cpp: adhrs.h \
 		hsc_pressure.h \
-		HRS_9250.h \
+		mpudriver.h \
 		Quaternion.h \
 		matrix.h \
 		vector.h \
@@ -479,7 +479,7 @@ compiler_clean: compiler_rcc_clean compiler_moc_header_clean
 
 Debug/adhrs.o: adhrs.cpp adhrs.h \
 		hsc_pressure.h \
-		HRS_9250.h \
+		mpudriver.h \
 		Quaternion.h \
 		matrix.h \
 		vector.h \
@@ -504,7 +504,7 @@ Debug/directional_gyro.o: directional_gyro.cpp directional_gyro.h
 Debug/ExEFIS.o: ExEFIS.cpp SplashWidget.h \
 		adhrs.h \
 		hsc_pressure.h \
-		HRS_9250.h \
+		mpudriver.h \
 		Quaternion.h \
 		matrix.h \
 		vector.h \
@@ -529,7 +529,7 @@ Debug/ExEFIS.o: ExEFIS.cpp SplashWidget.h \
 Debug/horizon_instrument.o: horizon_instrument.cpp horizon_instrument.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Debug/horizon_instrument.o horizon_instrument.cpp
 
-Debug/HRS_9250.o: HRS_9250.cpp HRS_9250.h \
+Debug/mpudriver.o: mpudriver.cpp mpudriver.h \
 		Quaternion.h \
 		matrix.h \
 		vector.h \
@@ -539,7 +539,7 @@ Debug/HRS_9250.o: HRS_9250.cpp HRS_9250.h \
 		MPU9250.h \
 		quaternionFilters.h \
 		SKFilter.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Debug/HRS_9250.o HRS_9250.cpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Debug/mpudriver.o mpudriver.cpp
 
 Debug/hsc_pressure.o: hsc_pressure.cpp hsc_pressure.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Debug/hsc_pressure.o hsc_pressure.cpp
@@ -551,7 +551,7 @@ Debug/knobs.o: knobs.cpp knobs.h \
 Debug/DiagWidget.o: DiagWidget.cpp DiagWidget.h \
 		adhrs.h \
 		hsc_pressure.h \
-		HRS_9250.h \
+		mpudriver.h \
 		Quaternion.h \
 		matrix.h \
 		vector.h \
@@ -581,7 +581,7 @@ Debug/panelWidget.o: panelWidget.cpp panelWidget.h \
 		MenuWidget.h \
 		adhrs.h \
 		hsc_pressure.h \
-		HRS_9250.h \
+		mpudriver.h \
 		Quaternion.h \
 		matrix.h \
 		vector.h \
@@ -617,7 +617,7 @@ Debug/spidriver.o: spidriver.cpp spidriver.h
 Debug/SplashWidget.o: SplashWidget.cpp SplashWidget.h \
 		adhrs.h \
 		hsc_pressure.h \
-		HRS_9250.h \
+		mpudriver.h \
 		Quaternion.h \
 		matrix.h \
 		vector.h \

@@ -1,5 +1,5 @@
 #include "directional_gyro.h"
-#include "QDebug"
+#include <unistd.h>
 
 
 
