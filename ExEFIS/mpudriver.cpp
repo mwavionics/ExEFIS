@@ -139,12 +139,12 @@ int mpudriver::Init(bool doSelfTest, bool doCalibration, bool doMagCalibration)
 
 	sensorID = dev->getMPU9250ID();
 	
-	qDebug("MPU9250  I AM 0x%02X  I should be 0x71\n", sensorID);
+	qDebug("MPU9250  I AM 0x%02X  I should be 0x71 or 0x73\n", sensorID);
 	// WHO_AM_I should always be 0x71 for MPU9250, 0x73 for MPU9255 
 	delay(1000);	
 	
 	//73 for Dev Board, 71 for production
-	if (sensorID == 0x71) {
+	if(sensorID == 0x71 || sensorID == 0x73) {
     
 		qDebug("MPU9250 is online...\n");
 

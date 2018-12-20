@@ -3,6 +3,7 @@
 #include "hsc_pressure.h"
 #include <QApplication>
 #include <QFile>
+#include <QDir>
 #include <QByteArray>
 #include <QString>
 #include <math.h>
@@ -40,27 +41,59 @@ adhrs::adhrs()
 	magScale[1] = 0.988048;
 	magScale[2] = 1.029046;	
 	
-	bool cal = false;
-	QFile *calfile = new QFile("/home/pi/sensorcal.txt");
-	if (calfile->exists())
+	//Initialize the caldata to all invalid values
+	for (int i = 0; i < 12; i++)
 	{
-		if (calfile->open(QIODevice::ReadOnly))
+		caldata[i] = 10000.0f;
+	}
+	
+	
+	/* Search the /home/pi directory for a sensor cal file
+	 * This has been udpated to allow sensorcal_serialnumber.txt files
+	 * This way MW Avionics can keep sensorcal files as backups for each SN*/
+	bool cal = false;
+	QDir directory("/home/pi");
+	QStringList files = directory.entryList(QStringList() << "*.txt" << "*.TXT", QDir::Files);
+	QString filename = NULL;
+	int num = files.count();
+	for (int i = 0; i < num; i++)
+	{
+		QString fn = files.at(i);
+		if (fn.contains("sensorcal", Qt::CaseInsensitive))
 		{
-			while (!calfile->atEnd()) {
-				QByteArray line = calfile->readLine();
-				calfile_process_line(line, caldata);
-			}
-			/* do we calibrate?*/
-			cal = calfile_validate(caldata);
-			if (cal) 
+			filename = fn;
+		}
+	}
+	if (filename != NULL)
+	{	
+		QFile *calfile = new QFile(filename);
+		if (calfile->exists())
+		{
+			if (calfile->open(QIODevice::ReadOnly))
 			{
-				qDebug() << "found valid caldata" << calfile->fileName();
-				mpudriver *hrs = new mpudriver(&caldata[0], &caldata[3], &caldata[6], &caldata[9]);				
-				int s = hrs->Init(true, false, false);
+				while (!calfile->atEnd()) {
+					QByteArray line = calfile->readLine();
+					calfile_process_line(line, caldata);
+				}
+				/* do we calibrate?*/
+				cal = calfile_validate(caldata);
+				if (cal) 
+				{
+					qDebug() << "found valid caldata" << calfile->fileName();
+					mpudriver *hrs = new mpudriver(&caldata[0], &caldata[3], &caldata[6], &caldata[9]);				
+					int s = hrs->Init(true, false, false);
+				}
+				else
+				{				
+					mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale);				
+					int s = hrs->Init(true, false, false);
+				}
 			}
 			else
-			{				
-				mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale);				
+			{
+				//float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale
+				mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale);
+				//HRS_9250 *hrs = new HRS_9250;
 				int s = hrs->Init(true, false, false);
 			}
 		}
@@ -71,13 +104,6 @@ adhrs::adhrs()
 			//HRS_9250 *hrs = new HRS_9250;
 			int s = hrs->Init(true, false, false);
 		}
-	}
-	else
-	{
-		//float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale
-		mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale);
-		//HRS_9250 *hrs = new HRS_9250;
-		int s = hrs->Init(true, false, false);
 	}
 
 	//bno055->begin(cal, BNO055::OPERATION_MODE_NDOF, caldata); //used to be IMUPLUS
@@ -232,6 +258,27 @@ void adhrs::calfile_process_line(QByteArray &line, float* data)
 
 bool adhrs::calfile_validate(float* data)
 {
+	bool valid = true;
+	//Gyro
+	if (data[0] > GYRO_POS_VALID || data[0] < GYRO_NEG_VALID) valid = false;
+	if (data[1] > GYRO_POS_VALID || data[1] < GYRO_NEG_VALID) valid = false;
+	if (data[2] > GYRO_POS_VALID || data[2] < GYRO_NEG_VALID) valid = false;
+	
+	//Accel	
+	if (data[3] > ACCEL_POS_VALID || data[3] < ACCEL_NEG_VALID) valid = false;
+	if (data[4] > ACCEL_POS_VALID || data[4] < ACCEL_NEG_VALID) valid = false;
+	if (data[5] > ACCEL_POS_VALID || data[5] < ACCEL_NEG_VALID) valid = false;
+	
+	//Mag Offset
+	if (data[6] > MAGBIAS_POS_VALID || data[6] < MAGBIAS_NEG_VALID) valid = false;
+	if (data[7] > MAGBIAS_POS_VALID || data[7] < MAGBIAS_NEG_VALID) valid = false;
+	if (data[8] > MAGBIAS_POS_VALID || data[8] < MAGBIAS_NEG_VALID) valid = false;
+	
+	//Mag Scale
+	if (data[9] > MAGSCALE_POS_VALID || data[9] < MAGSCALE_NEG_VALID) valid = false;
+	if (data[10] > MAGSCALE_POS_VALID || data[10] < MAGSCALE_NEG_VALID) valid = false;
+	if (data[11] > MAGSCALE_POS_VALID || data[11] < MAGSCALE_NEG_VALID) valid = false;
+	
 	return (true);
 }
 

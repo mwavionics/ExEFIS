@@ -4,6 +4,16 @@
 #include <QTimer>
 #include "mpudriver.h"
 
+//Defines for validity checks on the calibraitons
+#define GYRO_POS_VALID 1.0f
+#define GYRO_NEG_VALID -1.0f
+#define ACCEL_POS_VALID 0.1f
+#define ACCEL_NEG_VALID -0.1f
+#define MAGBIAS_POS_VALID 500.0f
+#define MAGBIAS_NEG_VALID -500.0f
+#define MAGSCALE_POS_VALID 1.2f
+#define MAGSCALE_NEG_VALID -1.2f
+
 class adhrs
 {
 public:

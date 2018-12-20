@@ -160,7 +160,7 @@ void panelWidget::onTimer(void)
 		{
 			mw->show = false;			
 			if (mw->value == 0) 
-			{
+			{				
 				system("gpio write 26 1");
 			}
 			if (mw->value == 2)
@@ -169,8 +169,8 @@ void panelWidget::onTimer(void)
 				system("i2cset -y 1 0x2f 0x00 0x0000 w");
 			}
 			if (mw->value == 1)
-			{
-				system("gpio write 26 0");
+			{				
+				system("gpio write 26 0"); // HW Rev 2
 				system("i2cset -y 1 0x2f 0x00 0xFFFF w");
 			}	
 			if (mw->value == 6)

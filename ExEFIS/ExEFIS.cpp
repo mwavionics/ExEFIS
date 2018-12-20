@@ -23,6 +23,11 @@ int main(int argc, char *argv[])
 	qDebug("****************** LOG BEGINS HERE **************************");
 	qDebug("Version 3.0 - Kitfox Test");
 	
+	system("cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2");
+	system("gpio mode 26 out");
+	system("gpio write 26 0");
+	system("i2cset -y 1 0x2f 0x00 0x0000 w");
+	
 	QApplication a(argc, argv);
 	
 	QApplication::setOverrideCursor(Qt::BlankCursor);
