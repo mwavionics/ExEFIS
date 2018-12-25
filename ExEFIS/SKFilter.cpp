@@ -47,6 +47,7 @@ void SKFilter::setInitializationDuration(int duration)
 	this->_initialized = false;	
 }
 
+static timeval last;
 bool SKFilter::validate(float gx, float gy, float gz, float ax, float ay, float az, float hx, float hy, float hz)
 {
 	valid = true;
@@ -61,27 +62,34 @@ bool SKFilter::validate(float gx, float gy, float gz, float ax, float ay, float 
 		gy > 2*M_PI || gy < -2*M_PI ||
 		gz > 2*M_PI || gz < -2*M_PI) valid = false;
 	
-	/* take the time sample now so when we get another value we're not hosed*/
-	static timeval last;
-		
+	/* take the time sample now so when we get another value we're not hosed*/		
 	timeval tp;
 	int v = gettimeofday(&tp, NULL);
 	int secs = tp.tv_sec - last.tv_sec;
 	_dt = secs * 1000000.0f + (tp.tv_usec - last.tv_usec);
-	_dt /= 1000000.0f;
-	last = tp;
+	_dt /= 1000000.0f;	
 	
-	if (_dt > 0.2) valid = false;
+	if (_dt > 0.2)
+	{
+		printf("invalid dt, > 0.2, tp.tv_sec = %d tp.tv_usec = %d last.tv_sec = %d last.tv_usec = %d \n", tp.tv_sec, tp.tv_usec, last.tv_sec, last.tv_usec );
+		valid = false;
+	}
+	if (_dt < 0.0f)
+	{
+		printf("invalid dt, < 0.0, tp.tv_sec = %d tp.tv_usec = %d last.tv_sec = %d last.tv_usec = %d \n", tp.tv_sec, tp.tv_usec, last.tv_sec, last.tv_usec);
+		valid = false;
+	}
 	
 	if (!valid)
 	{
-		
 		/* Reset the Previous values*/
 		gyroPrev[0] = 0;
 		gyroPrev[1] = 0;
-		gyroPrev[2] = 0;
-	
+		gyroPrev[2] = 0;	
 	}
+	
+	last.tv_sec = tp.tv_sec;
+	last.tv_usec = tp.tv_usec;
 	
 	return valid;
 }
@@ -156,7 +164,7 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 		{	
 			//Check if the gyro has been updated
 			if (gyroUpdated_) {	
-		
+
 				/* Calc Integral */
 				imu::Vector<3> integral;
 				integral[0] = ((gyroPrev[0] * _dt) + ((gx_ - gyroPrev[0]) * 0.5f * _dt));
@@ -165,29 +173,33 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				
 				//First Calc Roll Angle
 				_Euler[0] += integral[0];
-				if (_Euler[0] < (-2*M_PI)) _Euler[0] += 2*M_PI;
-				if (_Euler[0] > (2*M_PI)) _Euler[0] -= 2*M_PI;
+				_Euler[0] = constrainAngle180(_Euler[0]);
 				
-				//add a catch for big numbers
-				//POSTERROR
-				if(_Euler[0] < (-4*M_PI)) _Euler[0] = 0;
-				if (_Euler[0] > (4*M_PI)) _Euler[0] = 0;
-			
+				if (_Euler[0] > 4*M_PI || _Euler[0] < -4*M_PI) 
+				{
+					_Euler[0] = 0;
+					printf("Euler[0] out of range dt = %2.2f gy = %2.2f gprev = %2.2f", _dt, gx_, gyroPrev[0]);
+				}
+				
 				//Now, apply the pitch component and yaw component correctly to pitch if you're banked, same for yaw
 				_Euler[1] += (integral[1] * cos(_Euler[0])) + (integral[2] * sin(_Euler[0]));
-				magHeading += (integral[2] * cos(_Euler[0])) + (integral[1] * sin(_Euler[0]));
-			
+				_Euler[1] = constrainAngle180(_Euler[1]);
+				
+				if (_Euler[1] > 4*M_PI || _Euler[1] < -4*M_PI) 
+				{
+					_Euler[1] = 0;
+					printf("Euler[1] out of range dt = %+2.2f gy = %+2.2f gprev = %2.2f", _dt, gy_, gyroPrev[1]);
+				}
+
+				magHeading += (integral[2] * cos(_Euler[0])) + (integral[1] * sin(_Euler[0]));			
 				_Euler[2] = constrainAngle360(magHeading);
-				//_Euler[2] += integral[2];
+				if (_Euler[2] > 4*M_PI || _Euler[2] < -4*M_PI) 
+				{
+					_Euler[2] = 0;
+					printf("Euler[2] out of range dt = %+2.2f gy = %+2.2f gprev = %2.2f", _dt, gz_, gyroPrev[2]);
+				}
+
 				
-				
-				if(_Euler[1] < (-2*M_PI)) _Euler[1] += 2*M_PI;
-				if (_Euler[1] > (2*M_PI)) _Euler[1] -= 2*M_PI;
-				
-				//add a catch for big numbers
-				//POSTERROR
-				if(_Euler[1] < (-4*M_PI)) _Euler[1] = 0;
-				if (_Euler[1] > (4*M_PI)) _Euler[1] = 0;
 			}
 	
 			//Hack to pull back to center like spring in mech DG
@@ -206,29 +218,56 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 	
 			if (magUpdated_)
 			{
-				_magEuler[0] = mx_;
-				_magEuler[1] = my_;
-				_magEuler[2] = mz_;
+#if 0
+				float mag_norm = sqrt((mx_*mx_) + (my_*my_) + (mz_*mz_));
+				float xmag = mx_ / mag_norm;
+				float ymag = my_ / mag_norm;
+				float zmag = mz_ / mag_norm;
 				
-				float magvectormagnitude = _magEuler.magnitude();
-					
 				//Adjust for bank angle and pitch
+				float Roll = _Euler[0];
+				float Pitch = _Euler[1];
+				float Yaw = _Euler[2];
+				///first arg was ymag
+				float yawmag = -atan2((-ymag*cos(Roll) + zmag*sin(Roll)), (xmag*cos(Pitch) + ymag*sin(Pitch)*sin(Roll) + zmag*sin(Pitch)*cos(Roll))); 
+				_magEuler[2] = constrainAngle360(yawmag);
+				float rollmag = atan2((-ymag*cos(Pitch) + xmag*sin(Pitch)), (zmag*cos(Yaw) + ymag*sin(Yaw)*sin(Pitch) + xmag*sin(Yaw)*cos(Pitch))); 
+				_magEuler[0] = constrainAngle180(rollmag-M_PI);//need to offset this by pi
+				float pitchmag = -atan2((-xmag*cos(Yaw) + ymag*sin(Yaw)), (zmag*cos(Roll) + xmag*sin(Roll)*sin(Yaw) + ymag*sin(Roll)*cos(Yaw))); 
+				_magEuler[1] = constrainAngle180(pitchmag-M_PI);//need to offset this by pi
 				
-				float truemz = (sin(_Euler[0]) * my_) + (cos(_Euler[0])* mz_) + (sin(_Euler[1]) * mx_);
-				float truemx = (sin(_Euler[1]) * mz_) + (cos(_Euler[1])* mx_) + (sin(_Euler[2]) * my_);
-				float truemy = (sin(_Euler[2]) * mx_) + (cos(_Euler[2])* my_) + (sin(_Euler[0]) * mz_);
+				//_Euler[2] = _magEuler[2];
 				
-				//calc angle around z axis //SSK FIXME need to add pictch!!!
+				//SK Junk				//Assumes no pitch or roll for combo...				float mag_norm = sqrt((mx_*mx_) + (my_*my_) + (mz_*mz_));
+				
+				float xnorm = sqrt((my*my) + (mz*mz));
+				float rotx = asin(mz_ / xnorm); //Euler[0] - roll
+				//printf("zmagg = %2.3f xnorm = %2.3f \n", mz_, xnorm);
+				_Euler[0] = rotx;
+				
+				float ynorm = sqrt((mx*mx) + (mz*mz));
+				float roty = asin(mz_ / ynorm); //Euler[1] - pitch
+				_Euler[1] = roty;
+				
+				float znorm = sqrt((mx*mx) + (my*my));
+				float rotz = asin(my_ / znorm); //Euler[2] - yaw
+				_Euler[2] = rotz;
+				
+#endif
+				//flip y and z here and this reads mag pitch... works!!!
+				float truemz = (sin(_Euler[0]) * mz_) + (cos(_Euler[0])* my_);
+				float truemx = (sin(_Euler[1]) * mz_) + (cos(_Euler[1])* mx_);
+				
 				//x to front of plane y to wing
 				float tan = truemz / truemx;
 				float rads = atan(tan);
 				//which quadrant are we in?
 				float quadrantOffset = 0;
 		
-				if (truemz >= 0 && truemx >= 0) quad = 0;    //quadrantOffset = 0;
-				if(truemz >= 0 && truemx <  0) quad = 1;     //quadrantOffset = 180 *M_PI / 180.0f;
-				if(truemz <  0 && truemx <  0) quad = 2;     //quadrantOffset = 180 *M_PI / 180.0f;
-				if(truemz <  0 && truemx >= 0) quad = 3;     //quadrantOffset = 0 *M_PI / 180.0f;
+				if (truemz >= 0 && truemx >= 0) quad = 0;     //quadrantOffset = 0;
+				if(truemz >= 0 && truemx <  0) quad = 1;      //quadrantOffset = 180 *M_PI / 180.0f;
+				if(truemz <  0 && truemx <  0) quad = 2;      //quadrantOffset = 180 *M_PI / 180.0f;
+				if(truemz <  0 && truemx >= 0) quad = 3;      //quadrantOffset = 0 *M_PI / 180.0f;
 		
 				if(truemz >= 0 && truemx >= 0) quadrantOffset = 0;
 				if (truemz >= 0 && truemx <  0)quadrantOffset = M_PI;
@@ -240,9 +279,9 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 		
 				float diff = magCalc - gyroHeading;
 		
-				//magHeading += (diff / 2); //SSK killed magentic for now
+				magHeading += (diff / 2); //SSK killed magentic for now
 		
-				//_Euler[2] = constrainAngle360(magHeading);
+				_Euler[2] = constrainAngle360(magCalc);
 			}
 		}
 	}	
@@ -277,15 +316,14 @@ imu::Vector<3> SKFilter::getEuler(void)
 /* Bound angle between -180 and 180 */
 float SKFilter::constrainAngle180(float dta) {
 	if (dta >  M_PI) dta -= (M_PI * 2.0);
-	if (dta < -M_PI) dta += (M_PI * 2.0);
+	if (dta <= -M_PI) dta += (M_PI * 2.0);
 	return dta;
 }
 
 /* Bound angle between 0 and 360 */
 float SKFilter::constrainAngle360(float dta) {
-	dta = fmod(dta, 2.0*M_PI);
-	if (dta < 0.0)
-		dta += 2.0*M_PI;
+	if (dta >=  2*M_PI) dta -= (M_PI * 2.0);
+	if (dta < 0) dta += (M_PI * 2.0);
 	return dta;
 }
 

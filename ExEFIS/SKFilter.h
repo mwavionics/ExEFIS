@@ -44,6 +44,7 @@ private:
 	imu::Vector<3> _Euler;
 	imu::Vector<3> _Euler_Fixed;
 	imu::Vector<3> _magEuler;
+	imu::Vector<3> magPrev;
 	imu::Vector<3> gyroPrev;
 	imu::Vector<3> _InitialEuler;
 	

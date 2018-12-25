@@ -428,10 +428,10 @@ void mpudriver::RunFilter(void)
 		//The Y Vector points to the wings
 		//The Z Vector points to the front of the airplane
 		
-		if(filter.validate(gz*M_PI / 180.0f, -gy*M_PI / 180.0f, -gx*M_PI / 180.0f, az, ay, ax, mz, my, mx))
+		if(filter.validate(gz*M_PI / 180.0f, -gy*M_PI / 180.0f, -gx*M_PI / 180.0f, az, ay, ax, mz, mx, my))
 		{
 		
-			filter.update(gz*M_PI / 180.0f, -gy*M_PI / 180.0f, -gx*M_PI / 180.0f, az, ay, ax, mz, my, mx);
+			filter.update(gz*M_PI / 180.0f, -gy*M_PI / 180.0f, -gx*M_PI / 180.0f, az, ay, ax, mz, mx, my);
 			//filter.getQuaternion(&quatW[quatIndex], &quatX[quatIndex], &quatY[quatIndex], &quatZ[quatIndex]);		
 		}
 		
@@ -485,9 +485,9 @@ void mpudriver::RunFilter(void)
 				gx,
 				gy,
 				gz,
-				mx,
+				mx, //this is yaw2
 				my,
-				mz,
+				mz, //this is yaw1
 				filter.quad);
 //			printf("Orientation:, %f, %f, %f, Accelerometer:, %d, %d, %d, Gyro: , %d, %d, %d, Mag:, %d, %d, %d,  \n", 
 //				euler.x() * 180.0f / M_PI,

@@ -111,6 +111,9 @@
     <None Include="img.qrc">
       <Filter>Resource files</Filter>
     </None>
+    <None Include="Eigen\Eigen">
+      <Filter>Header files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SplashWidget.h">

@@ -12,7 +12,9 @@
 #include <QWidget>
 
 
-
+/*
+ *Constructor for the ADHRS class
+ **/
 adhrs::adhrs()
 {	
 	staticpress = new hsc_pressure();
@@ -22,24 +24,24 @@ adhrs::adhrs()
 
 	/* Current Kitfox Values 10/12/18 */
 	static float gyroBias[3];
-	gyroBias[0] = 0.70;
-	gyroBias[1] = 0.68;
-	gyroBias[2] = 0.60;	
+	gyroBias[0] = 0.0;
+	gyroBias[1] = 0.0;
+	gyroBias[2] = 0.0;	
 	
 	static float accelBias[3];
-	accelBias[0]  = -0.021;
-	accelBias[1] = 0.026;
-	accelBias[2] = -0.24;
+	accelBias[0] = 0;
+	accelBias[1] = 0;
+	accelBias[2] = 0;
 	
 	static float magBias[3];
-	magBias[0] = 79.596497;
-	magBias[1] = 213.663010;
-	magBias[2] = -576.351318;
+	magBias[0] = 0;
+	magBias[1] = 0;
+	magBias[2] = 0;
 	
 	static float magScale[3];
-	magScale[0] = 0.984127;
-	magScale[1] = 0.988048;
-	magScale[2] = 1.029046;	
+	magScale[0] = 1;
+	magScale[1] = 1;
+	magScale[2] = 1;	
 	
 	//Initialize the caldata to all invalid values
 	for (int i = 0; i < 12; i++)
@@ -82,37 +84,16 @@ adhrs::adhrs()
 					qDebug() << "found valid caldata" << calfile->fileName();
 					mpudriver *hrs = new mpudriver(&caldata[0], &caldata[3], &caldata[6], &caldata[9]);				
 					int s = hrs->Init(true, false, false);
-				}
-				else
-				{				
-					mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale);				
-					int s = hrs->Init(true, false, false);
-				}
-			}
-			else
-			{
-				//float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale
-				mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale);
-				//HRS_9250 *hrs = new HRS_9250;
-				int s = hrs->Init(true, false, false);
-			}
-		}
-		else
-		{
-			//float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale
-			mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale);
-			//HRS_9250 *hrs = new HRS_9250;
-			int s = hrs->Init(true, false, false);
-		}
+				}				
+			}			
+		}		
 	}
-
-	//bno055->begin(cal, BNO055::OPERATION_MODE_NDOF, caldata); //used to be IMUPLUS
-	
-//	if (!bno055->isFullyCalibrated())
-//	{
-		//while (1)
-			;
-//	}
+	if (!cal)
+	{			
+		qDebug() << "using default caldata, no file found" ;
+		mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale);				
+		int s = hrs->Init(true, false, false);		
+	}
 }
 
 
