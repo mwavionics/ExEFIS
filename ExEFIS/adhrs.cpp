@@ -22,7 +22,7 @@ adhrs::adhrs()
 	airspeed = new hsc_pressure(1);
 	airspeed->set_params(1, -1);
 
-	/* Current Kitfox Values 10/12/18 */
+	//NOTE: these are static so that the pigpio callback for the interrupt has access to them
 	static float gyroBias[3];
 	gyroBias[0] = 0.0;
 	gyroBias[1] = 0.0;
@@ -47,23 +47,23 @@ adhrs::adhrs()
 	for (int i = 0; i < 12; i++)
 	{
 		caldata[i] = 10000.0f;
-	}
-	
+	}	
 	
 	/* Search the /home/pi directory for a sensor cal file
 	 * This has been udpated to allow sensorcal_serialnumber.txt files
 	 * This way MW Avionics can keep sensorcal files as backups for each SN*/
 	bool cal = false;
 	QDir directory("/home/pi");
-	QStringList files = directory.entryList(QStringList() << "*.txt" << "*.TXT", QDir::Files);
+	qDebug() << "Searching " << directory.path() << " for calibration file";
+	QFileInfoList files = directory.entryInfoList(QStringList() << "*.txt" << "*.TXT", QDir::Files);
 	QString filename = NULL;
 	int num = files.count();
 	for (int i = 0; i < num; i++)
 	{
-		QString fn = files.at(i);
+		QString fn = files.at(i).fileName();		
 		if (fn.contains("sensorcal", Qt::CaseInsensitive))
 		{
-			filename = fn;
+			filename = files.at(i).filePath();			
 		}
 	}
 	if (filename != NULL)
@@ -71,6 +71,7 @@ adhrs::adhrs()
 		QFile *calfile = new QFile(filename);
 		if (calfile->exists())
 		{
+			qDebug() << "calfile exists" << calfile->fileName();
 			if (calfile->open(QIODevice::ReadOnly))
 			{
 				while (!calfile->atEnd()) {
@@ -90,7 +91,7 @@ adhrs::adhrs()
 	}
 	if (!cal)
 	{			
-		qDebug() << "using default caldata, no file found" ;
+		qDebug() << "using zero'd caldata, no file found" ;
 		mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale);				
 		int s = hrs->Init(true, false, false);		
 	}
@@ -263,3 +264,9 @@ bool adhrs::calfile_validate(float* data)
 	return (true);
 }
 
+
+
+bool adhrs::getWingsLevel(void)
+{
+	return hrs->getWingsLevel();
+}

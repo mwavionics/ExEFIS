@@ -489,6 +489,8 @@ void mpudriver::RunFilter(void)
 				my,
 				mz, //this is yaw1
 				filter.quad);
+			printf("Wings Level, %d \n", filter.wingslevel);
+			printf("DMAG[2] = , %+2.4f \n", filter.dmag[2]);
 //			printf("Orientation:, %f, %f, %f, Accelerometer:, %d, %d, %d, Gyro: , %d, %d, %d, Mag:, %d, %d, %d,  \n", 
 //				euler.x() * 180.0f / M_PI,
 //				euler.y() * 180.0f / M_PI,
@@ -520,4 +522,12 @@ void mpudriver::RunFilter(void)
 void mpudriver::resetAlgorithm(void)
 {
 	ax = ay = az = gx = gy = gz = mx = my = mz = 0;
+}
+
+
+
+
+bool mpudriver::getWingsLevel(void)
+{
+	return filter.wingslevel;
 }

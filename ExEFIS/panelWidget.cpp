@@ -97,6 +97,7 @@ void panelWidget::onTimer(void)
 	vi1->setValue(airspeed::getIASMph(adhrdata[1]));
 	vi2->setValue(altitude::getAltitudeFt(adhrdata[0], vi2->setting/pow(10, vi2->settingPrec)));
 	ss->setValue(adhrdata[5]);	
+	r->setWingsLevel(adhr->getWingsLevel());
 /*
 	if (sw->value == 0) r1->setValue(0);
 	else

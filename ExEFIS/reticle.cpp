@@ -7,6 +7,7 @@
 reticle::reticle(QWidget *parent)
 	: QWidget(parent)
 {
+	wingsLevel = false;
 }
 
 
@@ -29,7 +30,8 @@ void reticle::paintEvent(QPaintEvent *event)
 	points[3] = QPoint(points[0].x() + (width() / 4), points[0].y() + (width() / 8));
 	
 	painter.setBrush(Qt::white);
-	painter.setPen(Qt::black);
+	if (wingsLevel)	painter.setPen(Qt::black);
+	else painter.setPen(Qt::red);
 	
 	painter.drawPolygon(points, 4);
 	/* Draw the horizontal bars */
@@ -43,4 +45,9 @@ void reticle::paintEvent(QPaintEvent *event)
 	painter.drawRect(left);
 	painter.drawRect(right);
 	
+}
+
+void reticle::setWingsLevel(bool level)
+{
+	wingsLevel = level;
 }

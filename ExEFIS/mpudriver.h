@@ -46,6 +46,7 @@ public:
 	float getRoll(void);
 	float getPitch(void);
 	float getHeading(void);
+	bool getWingsLevel(void);	
 	/* Returns the roll angle, rad */
 //	float getRoll_rad() {
 //		return filter.getRoll_rad();
@@ -72,6 +73,7 @@ public:
 private:
 	PiI2C *mpu;
 	PiI2C *mag;
+	
 
 	
 

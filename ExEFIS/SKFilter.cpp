@@ -3,10 +3,26 @@
 #include "math.h"
 #include <QDebug>
 
-const int magbuffersize = 100;
+const int magbuffersize = 500;
 static float magbuffer[3][magbuffersize];
+static float dmagbuffer[3][magbuffersize];
+static timeval last;
 
+/**********************************************************************************************//**
+* Module: SKFilter::SKFilter
+***************************************************************************************************
+* @brief	init the SK Filter for AHRS
 
+* @note		
+*
+* @todo		
+*	
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 11/06/17 - Created & Commented
+**************************************************************************************************/
 SKFilter::SKFilter()
 {
 	valid = false;
@@ -18,25 +34,46 @@ SKFilter::SKFilter()
 	//Reference Coordinates for the chip, not the airplane
 	_Euler_Fixed[0] = 0;
 	_Euler_Fixed[1] = 0;
-	_Euler_Fixed[2] = M_PI;	
+	_Euler_Fixed[2] = 0;	
 	
 	_magEuler[0] = 0;
 	_magEuler[1] = 0;
 	_magEuler[2] = 0;
 	
+	_gyroEuler[0] = 0;
+	_gyroEuler[1] = 0;
+	_gyroEuler[2] = 0;
+	
 	gyroPrev[0] = 0;
 	gyroPrev[1] = 0;
 	gyroPrev[2] = 0;
 	
+	magPrev[0] = 0;
+	magPrev[1] = 0;
+	magPrev[2] = 0;
+	
 	magHeading = 0;
 	_initCounter = 0;
 	_initialized = false;
+	wingslevel = false;
 	magbufferindex = 0;
 }
 
+/**********************************************************************************************//**
+* Module: SKFilter::~SKFilter
+***************************************************************************************************
+* @brief	Deconstructor for the SK Filter AHRS
 
-
-
+* @note		
+*
+* @todo		
+*	
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 11/06/17 - Created & Commented
+**************************************************************************************************/
 SKFilter::~SKFilter()
 {
 }
@@ -47,7 +84,21 @@ void SKFilter::setInitializationDuration(int duration)
 	this->_initialized = false;	
 }
 
-static timeval last;
+/**********************************************************************************************//**
+* Module: SKFilter::validate
+***************************************************************************************************
+* @brief	Validate the accel, gyro, and magnetometer readings beofer processing
+
+* @note		used to filter out HF noise from gyro, etc...
+*
+* @todo		
+*	
+* @returns	true if data is valid
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 11/06/17 - Created & Commented
+**************************************************************************************************/
 bool SKFilter::validate(float gx, float gy, float gz, float ax, float ay, float az, float hx, float hy, float hz)
 {
 	valid = true;
@@ -94,38 +145,59 @@ bool SKFilter::validate(float gx, float gy, float gz, float ax, float ay, float 
 	return valid;
 }
 
+/**********************************************************************************************//**
+* Module: SKFilter::update
+***************************************************************************************************
+* @brief	update the orientation
 
+* @note		
+*
+* @todo		
+*	
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 11/06/17 - Created & Commented
+**************************************************************************************************/
 bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az, float mx, float my, float mz)
 {
 	if (valid)
 	{
-		
+			
 	
 		// checking if gyro data updated
-	 if((gx != gx_) || (gy != gy_) || (gz != gz_)) {
-			gyroUpdated_ = true;
-			gyroPrev[0] = gx_;
-			gx_ = gx;
-			gyroPrev[1] = gy_;
-			gy_ = gy;
-			gyroPrev[2] = gz_;
-			gz_ = gz;
-		} else {
-			gyroUpdated_ = false;
+		if((gx != gx_) || (gy != gy_) || (gz != gz_)) 
+		{
+				gyroUpdated_ = true;
+				gyroPrev[0] = gx_;
+				gx_ = gx;
+				gyroPrev[1] = gy_;
+				gy_ = gy;
+				gyroPrev[2] = gz_;
+				gz_ = gz;
+			} 
+		else 
+		{
+				gyroUpdated_ = false;
 		}
 
 		// checking if accel data updated
-		if((ax != ax_) || (ay != ay_) || (az != az_)) {
+		if((ax != ax_) || (ay != ay_) || (az != az_)) 
+		{
 			accelUpdated_ = true;
 			ax_ = ax;
 			ay_ = ay;
 			az_ = az;
-		} else {
+		} 
+		else 
+		{
 			accelUpdated_ = false;
 		}
 
 		// checking if magnetometer data updated
-		if((mx != mx_) || (my != my_) || (mz != mz_)) {
+		if((mx != mx_) || (my != my_) || (mz != mz_)) 
+		{
 			magUpdated_ = true;
 			magbuffer[0][magbufferindex] = mx;
 			magbuffer[1][magbufferindex] = my;
@@ -135,8 +207,11 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			mx_ = 0;
 			my_ = 0;
 			mz_ = 0;
+			
+			
 			for (int i = 0; i < magbuffersize; i++)
-			{
+			{			
+				
 				mx_ += magbuffer[0][i];
 				my_ += magbuffer[1][i];
 				mz_ += magbuffer[2][i];
@@ -145,115 +220,140 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			my_ /= magbuffersize;
 			mz_ /= magbuffersize;
 		
-		} else {
+		} 
+		else 
+		{
 			magUpdated_ = false;
 		}
 	
 		if (gyroUpdated_ || magUpdated_ || accelUpdated_)
 		{
 			_initCounter++;
-			if (_initCounter > 100) _initialized = true;
-			// get the change in time
-			//_tnow = (float) micros() / 1000000.0;
-			//_dt = _tnow - _tprev;
-			//_tprev = _tnow;
-		}
-	
+			if (_initCounter > 100) _initialized = true;		
+		}	
 	
 		if (_initialized)
 		{	
-			//Check if the gyro has been updated
-			if (gyroUpdated_) {	
-
-				/* Calc Integral */
-				imu::Vector<3> integral;
-				integral[0] = ((gyroPrev[0] * _dt) + ((gx_ - gyroPrev[0]) * 0.5f * _dt));
-				integral[1] = ((gyroPrev[1] * _dt) + ((gy_ - gyroPrev[1]) * 0.5f * _dt));
-				integral[2] = ((gyroPrev[2] * _dt) + ((gz_ - gyroPrev[2]) * 0.5f * _dt));
-				
-				//First Calc Roll Angle
-				_Euler[0] += integral[0];
-				_Euler[0] = constrainAngle180(_Euler[0]);
-				
-				if (_Euler[0] > 4*M_PI || _Euler[0] < -4*M_PI) 
-				{
-					_Euler[0] = 0;
-					printf("Euler[0] out of range dt = %2.2f gy = %2.2f gprev = %2.2f", _dt, gx_, gyroPrev[0]);
-				}
-				
-				//Now, apply the pitch component and yaw component correctly to pitch if you're banked, same for yaw
-				_Euler[1] += (integral[1] * cos(_Euler[0])) + (integral[2] * sin(_Euler[0]));
-				_Euler[1] = constrainAngle180(_Euler[1]);
-				
-				if (_Euler[1] > 4*M_PI || _Euler[1] < -4*M_PI) 
-				{
-					_Euler[1] = 0;
-					printf("Euler[1] out of range dt = %+2.2f gy = %+2.2f gprev = %2.2f", _dt, gy_, gyroPrev[1]);
-				}
-
-				magHeading += (integral[2] * cos(_Euler[0])) + (integral[1] * sin(_Euler[0]));			
-				_Euler[2] = constrainAngle360(magHeading);
-				if (_Euler[2] > 4*M_PI || _Euler[2] < -4*M_PI) 
-				{
-					_Euler[2] = 0;
-					printf("Euler[2] out of range dt = %+2.2f gy = %+2.2f gprev = %2.2f", _dt, gz_, gyroPrev[2]);
-				}
-
-				
-			}
-	
-			//Hack to pull back to center like spring in mech DG
-			if(accelUpdated_)
-			{
-				if (abs(az_ - 1.0f) < 0.05f)
-				{
-					if (_Euler[0] > 0) _Euler[0] -= 0.05f * _dt;   //move at 0.1 rad / s
-					else _Euler[0] += 0.05f * _dt;
-					if (_Euler[1] > 0) _Euler[1] -= 0.05f * _dt;     //move at 0.1 rad / s
-					else _Euler[1] += 0.05f * _dt;
-				}
-				//_Euler[0] = constrainAngle360(_Euler[0]);
-				//_Euler[1] = constrainAngle360(_Euler[1]);
-			}
-	
+			
 			if (magUpdated_)
 			{
-#if 0
+
 				float mag_norm = sqrt((mx_*mx_) + (my_*my_) + (mz_*mz_));
 				float xmag = mx_ / mag_norm;
 				float ymag = my_ / mag_norm;
 				float zmag = mz_ / mag_norm;
 				
 				//Adjust for bank angle and pitch
-				float Roll = _Euler[0];
-				float Pitch = _Euler[1];
-				float Yaw = _Euler[2];
-				///first arg was ymag
+				float Roll = 0; //_Euler[0];
+				float Pitch = 0; //_Euler[1];
+				float Yaw = 0; //_Euler[2];
+#if 0				
+				float rollmag = atan2((-ymag*cos(Pitch) + xmag*sin(Pitch)), (zmag*cos(Yaw) + ymag*sin(Yaw)*sin(Pitch) + xmag*sin(Yaw)*cos(Pitch))); 
+				_magEuler[0] = constrainAngle180(rollmag - M_PI);  //need to offset this by pi
+			//	Roll = _magEuler[0];
+				
+				float pitchmag = -atan2((-xmag*cos(Yaw) + ymag*sin(Yaw)), (zmag*cos(Roll) + xmag*sin(Roll)*sin(Yaw) + ymag*sin(Roll)*cos(Yaw))); 
+				_magEuler[1] = constrainAngle180(pitchmag - M_PI);  //need to offset this by pi
+			//	Pitch = _magEuler[1];
+				
 				float yawmag = -atan2((-ymag*cos(Roll) + zmag*sin(Roll)), (xmag*cos(Pitch) + ymag*sin(Pitch)*sin(Roll) + zmag*sin(Pitch)*cos(Roll))); 
 				_magEuler[2] = constrainAngle360(yawmag);
-				float rollmag = atan2((-ymag*cos(Pitch) + xmag*sin(Pitch)), (zmag*cos(Yaw) + ymag*sin(Yaw)*sin(Pitch) + xmag*sin(Yaw)*cos(Pitch))); 
-				_magEuler[0] = constrainAngle180(rollmag-M_PI);//need to offset this by pi
-				float pitchmag = -atan2((-xmag*cos(Yaw) + ymag*sin(Yaw)), (zmag*cos(Roll) + xmag*sin(Roll)*sin(Yaw) + ymag*sin(Roll)*cos(Yaw))); 
-				_magEuler[1] = constrainAngle180(pitchmag-M_PI);//need to offset this by pi
+#endif				
+				float rollmag = atan2((-ymag), (zmag)); 
+				_magEuler[0] = constrainAngle180(rollmag - M_PI);   //need to offset this by pi
+			//	Roll = _magEuler[0];
 				
-				//_Euler[2] = _magEuler[2];
+				float pitchmag = -atan2((-xmag ), (zmag)); 
+				_magEuler[1] = constrainAngle180(pitchmag - M_PI);   //need to offset this by pi
+			//	Pitch = _magEuler[1];
 				
-				//SK Junk				//Assumes no pitch or roll for combo...				float mag_norm = sqrt((mx_*mx_) + (my_*my_) + (mz_*mz_));
+				float yawmag = -atan2((-ymag), (xmag)); 
+				_magEuler[2] = constrainAngle360(yawmag);
+				
+				
+				
+				dmagbuffer[0][magbufferindex] = (_magEuler[0] - magPrev[0]) / _dt ;
+				dmagbuffer[1][magbufferindex] = (_magEuler[1] - magPrev[1]) / _dt ;
+				dmagbuffer[2][magbufferindex] = (_magEuler[2] - magPrev[2]) / _dt ;	
+				dmag[0] = 0;
+				dmag[1] = 0;
+				dmag[2] = 0;			
+			
+				for (int i = 0; i < magbuffersize; i++)
+				{			
+				
+					dmag[0] += dmagbuffer[0][i];
+					dmag[1] += dmagbuffer[1][i];
+					dmag[2] += dmagbuffer[2][i];
+				}
+				dmag[0] /= magbuffersize;
+				dmag[1] /= magbuffersize;
+				dmag[2] /= magbuffersize;
+				
+				
+				
+				if (abs(dmag[2]) < 0.02f)
+				{
+					magyawstill = true;
+					//printf("yawstill");
+				}
+				else magyawstill = false;
+				
+#if 0
+				imu::Vector<3> magintegral;
+				magintegral[0] = ((magPrev[0] * _dt) + ((dmag[0] - magPrev[0]) * 0.5f * _dt));
+				magintegral[1] = ((magPrev[1] * _dt) + ((dmag[1] - magPrev[1]) * 0.5f * _dt));
+				magintegral[2] = ((magPrev[2] * _dt) + ((dmag[2] - magPrev[2]) * 0.5f * _dt));
+				
+				//First Calc Roll Angle
+				_magEuler[0] += magintegral[0];
+				_magEuler[0] = constrainAngle180(_Euler[0]);
+				
+				if (_magEuler[0] > 4*M_PI || _magEuler[0] < -4*M_PI) 
+				{
+					_magEuler[0] = 0;
+					printf("Mag Euler[0] out of range dt = %2.2f gy = %2.2f gprev = %2.2f", _dt, gx_, magPrev[0]);
+				}
+				
+				//Now, apply the pitch component and yaw component correctly to pitch if you're banked, same for yaw
+				_magEuler[1] += (magintegral[1] * cos(_magEuler[0])) + (magintegral[2] * sin(_magEuler[0]));
+				_magEuler[1] = constrainAngle180(_magEuler[1]);
+				
+				if (_magEuler[1] > 4*M_PI || _magEuler[1] < -4*M_PI) 
+				{
+					_magEuler[1] = 0;
+					printf("MagEuler[1] out of range dt = %+2.2f gy = %+2.2f gprev = %2.2f", _dt, gy_, magPrev[1]);
+				}
+
+				magHeading += (magintegral[2] * cos(_magEuler[0])) + (magintegral[1] * sin(_magEuler[0]));			
+				_magEuler[2] = constrainAngle360(magHeading);
+				if (_magEuler[2] > 4*M_PI || _magEuler[2] < -4*M_PI) 
+				{
+					_magEuler[2] = 0;
+					printf("MagEuler[2] out of range dt = %+2.2f gy = %+2.2f gprev = %2.2f", _dt, gz_, magPrev[2]);
+				}
+#endif
+				magPrev[0] = _magEuler[0];
+				magPrev[1] = _magEuler[1];
+				magPrev[2] = _magEuler[2];
+				
+								
+#if 0				//SK Junk				//Assumes no pitch or roll for combo...				float mag_norm = sqrt((mx_*mx_) + (my_*my_) + (mz_*mz_));
 				
 				float xnorm = sqrt((my*my) + (mz*mz));
-				float rotx = asin(mz_ / xnorm); //Euler[0] - roll
+				float rotx = asin(mz_ / xnorm);  //Euler[0] - roll
 				//printf("zmagg = %2.3f xnorm = %2.3f \n", mz_, xnorm);
 				_Euler[0] = rotx;
 				
 				float ynorm = sqrt((mx*mx) + (mz*mz));
-				float roty = asin(mz_ / ynorm); //Euler[1] - pitch
+				float roty = asin(mz_ / ynorm);  //Euler[1] - pitch
 				_Euler[1] = roty;
 				
 				float znorm = sqrt((mx*mx) + (my*my));
-				float rotz = asin(my_ / znorm); //Euler[2] - yaw
+				float rotz = asin(my_ / znorm);  //Euler[2] - yaw
 				_Euler[2] = rotz;
 				
-#endif
+
 				//flip y and z here and this reads mag pitch... works!!!
 				float truemz = (sin(_Euler[0]) * mz_) + (cos(_Euler[0])* my_);
 				float truemx = (sin(_Euler[1]) * mz_) + (cos(_Euler[1])* mx_);
@@ -264,10 +364,10 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				//which quadrant are we in?
 				float quadrantOffset = 0;
 		
-				if (truemz >= 0 && truemx >= 0) quad = 0;     //quadrantOffset = 0;
-				if(truemz >= 0 && truemx <  0) quad = 1;      //quadrantOffset = 180 *M_PI / 180.0f;
-				if(truemz <  0 && truemx <  0) quad = 2;      //quadrantOffset = 180 *M_PI / 180.0f;
-				if(truemz <  0 && truemx >= 0) quad = 3;      //quadrantOffset = 0 *M_PI / 180.0f;
+				if (truemz >= 0 && truemx >= 0) quad = 0;      //quadrantOffset = 0;
+				if(truemz >= 0 && truemx <  0) quad = 1;       //quadrantOffset = 180 *M_PI / 180.0f;
+				if(truemz <  0 && truemx <  0) quad = 2;       //quadrantOffset = 180 *M_PI / 180.0f;
+				if(truemz <  0 && truemx >= 0) quad = 3;       //quadrantOffset = 0 *M_PI / 180.0f;
 		
 				if(truemz >= 0 && truemx >= 0) quadrantOffset = 0;
 				if (truemz >= 0 && truemx <  0)quadrantOffset = M_PI;
@@ -279,10 +379,103 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 		
 				float diff = magCalc - gyroHeading;
 		
-				magHeading += (diff / 2); //SSK killed magentic for now
+				magHeading += (diff / 2);  //SSK killed magentic for now
 		
 				_Euler[2] = constrainAngle360(magCalc);
+#endif
 			}
+			//Check if the gyro has been updated
+			if (gyroUpdated_) {	
+
+				//	float gxx = (gx_ < 5) ? dmag[0] : (0.2*dmag[0]) + (0.8*gx_);
+				//	float gyy = (gy_ < 5) ? dmag[1] : (0.2*dmag[1]) + (0.8*gy_);
+				//	float gzz = (gz_ < 5) ? dmag[2] : (0.2*dmag[2]) + (0.8*gz_);
+				
+				float gxx = gx_;
+				float gyy = gy_;
+				float gzz = gz_;
+					
+				/* Calc Integral */
+				imu::Vector<3> integral;
+				integral[0] = ((gyroPrev[0] * _dt) + ((gxx - gyroPrev[0]) * 0.5f * _dt));
+				integral[1] = ((gyroPrev[1] * _dt) + ((gyy - gyroPrev[1]) * 0.5f * _dt));
+				integral[2] = ((gyroPrev[2] * _dt) + ((gzz - gyroPrev[2]) * 0.5f * _dt));
+				
+				//First Calc Roll Angle
+				_gyroEuler[0] += integral[0];
+				_gyroEuler[0] = constrainAngle180(_gyroEuler[0]);
+				
+				if (_gyroEuler[0] > 4*M_PI || _gyroEuler[0] < -4*M_PI) 
+				{
+					_gyroEuler[0] = 0;
+					printf("Euler[0] out of range dt = %2.2f gy = %2.2f gprev = %2.2f", _dt, gx_, gyroPrev[0]);
+				}
+				
+				//Now, apply the pitch component and yaw component correctly to pitch if you're banked, same for yaw
+				_gyroEuler[1] += (integral[1] * cos(_gyroEuler[0])) + (integral[2] * sin(_gyroEuler[0]));
+				_gyroEuler[1] = constrainAngle180(_gyroEuler[1]);
+				
+				if (_gyroEuler[1] > 4*M_PI || _Euler[1] < -4*M_PI) 
+				{
+					_gyroEuler[1] = 0;
+					printf("Euler[1] out of range dt = %+2.2f gy = %+2.2f gprev = %2.2f", _dt, gy_, gyroPrev[1]);
+				}
+				
+				float mghdiff = (integral[2] * cos(_gyroEuler[0])) + (integral[1] * sin(_gyroEuler[0]));	
+				magHeading += mghdiff; 			
+				
+				if (abs(mghdiff) < 0.25) gyroyawstill = true;
+				else gyroyawstill = false;
+								
+				_gyroEuler[2] = constrainAngle360(magHeading);
+				if (_gyroEuler[2] > 4*M_PI || _gyroEuler[2] < -4*M_PI) 
+				{
+					_gyroEuler[2] = 0;
+					printf("Euler[2] out of range dt = %+2.2f gy = %+2.2f gprev = %2.2f", _dt, gz_, gyroPrev[2]);
+				}				
+			}
+	
+			
+	
+			
+			
+			//Hack to pull back to center like spring in mech DG
+			if(accelUpdated_)
+			{
+				if (abs(ay_) < 0.05f)
+				{
+					ballcentered = true;
+				//	printf("ball centered");
+				}
+				else
+				{
+					ballcentered = false;
+				}
+				if (abs(az_ - 1.0f) < 0.5f)
+				{
+					
+					if (_gyroEuler[1] > 0) _gyroEuler[1] -= 0.05f * _dt;      //move at 0.1 rad / s
+					else _gyroEuler[1] += 0.05f * _dt;
+				}
+				//_Euler[0] = constrainAngle360(_Euler[0]);
+				//_Euler[1] = constrainAngle360(_Euler[1]);
+			}
+			
+			if (magyawstill && gyroyawstill && ballcentered)
+			{
+				wingslevel = true;
+				//printf("wings level \r\n");
+				if (_Euler[0] > 0) _Euler_Fixed[0] -= 0.1f * _dt;         //move at 0.1 rad / s
+					else _Euler_Fixed[0] += 0.1f * _dt;
+			}
+			else
+			{
+				wingslevel = false;
+			}
+			
+			_Euler[0] = (1.0*_gyroEuler[0]) + (0.0*_magEuler[0]) + _Euler_Fixed[0];
+			_Euler[1] = (1.0*_gyroEuler[1]) + (0.0*_magEuler[1]) + _Euler_Fixed[1];
+			_Euler[2] = (1.0*_gyroEuler[2]) + (0.0*_magEuler[2]) + _Euler_Fixed[2];
 		}
 	}	
 }

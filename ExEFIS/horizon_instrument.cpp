@@ -70,4 +70,3 @@ horizon_instrument::~horizon_instrument()
 }
 
 
-

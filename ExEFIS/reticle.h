@@ -10,10 +10,11 @@ class reticle :public QWidget
 	
 public :
 	reticle(QWidget *parent = 0);
-	
+	void setWingsLevel(bool level);
 	~reticle();
 	
 protected:
 	void paintEvent(QPaintEvent *event) override;
+	bool wingsLevel;
 };
 

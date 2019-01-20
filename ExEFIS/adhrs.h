@@ -24,6 +24,7 @@ public:
 	int getOffsets(char* calData);
 	int setOffsets(char* calData);
 	void getCalibration(char* cal);
+	bool getWingsLevel(void);
 	
 	
 private:
