@@ -2,10 +2,23 @@
 #include "Vector.h"
 #include <sys/time.h>
 
+typedef struct 
+{
+	bool magpitch;
+	bool magyaw;
+	bool magroll;
+	bool gyropitch;
+	bool gyroyaw;
+	bool gyroroll;
+	bool accelpitch;
+	bool accelyaw;
+	bool accelroll;
+} AXIS_STILL;
 
 class SKFilter
 {
-public:
+	
+	public:
 	SKFilter();
 	~SKFilter();
 	void setInitializationDuration(int duration);
@@ -18,7 +31,11 @@ public:
 	int quad = 0;
 	imu::Vector<3> getEuler(void);
 	bool wingslevel;
-	imu::Vector<3> dmag;
+	bool ballcentered;
+	bool pitchlevel;
+	imu::Vector<3> dmag;	
+	AXIS_STILL axisstill;
+	
 private:
 	bool _initialized = false;
 	int _initCounter = 0;
@@ -27,9 +44,10 @@ private:
 	float valid;
 	timeval last;
 	
-	float magHeading;
+	float gyroHeading;
 	
 	int magbufferindex = 0;
+	int accelbufferindex = 0;
 	
 	
 	
@@ -48,16 +66,18 @@ private:
 	imu::Vector<3> _Euler_Fixed;
 	imu::Vector<3> _gyroEuler;
 	imu::Vector<3> _magEuler;
+	imu::Vector<3> _accelEuler;
 	imu::Vector<3> magPrev;
 	imu::Vector<3> gyroPrev;
+	imu::Vector<3> accelPrev;
 	
 	imu::Vector<3> _InitialEuler;
 	
-	bool magyawstill;
-	bool gyroyawstill;
-	bool rollstill;
-	bool pitchstill;
-	bool ballcentered;
+	//bool magyawstill;
+	//bool gyroyawstill;
+	//bool rollstill;
+	//bool pitchstill;
+	//bool ballcentered;
 	
 	
 };

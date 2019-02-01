@@ -465,16 +465,6 @@ void mpudriver::RunFilter(void)
 			float qw, qx, qy, qz;
 			
 			euler = filter.getEuler();
-		//	euler = q.toEuler();
-			
-			//printf("TIME DELTA:::::: = %f \n", deltat); 
-			
-			//printf("ax = %d  ay = %d  az = %d mg\n", (int)(1000*ax), (int)(1000*ay), (int)(1000*az));
-			//printf("gx = %+2.2f  gy = %+2.2f  gz = %+2.2f deg/s\n", gx, gy, gz);
-			//printf("mx = %d  my = %d  mz = %d mG\n", (int)mx, (int)my, (int)mz);
-			//printf("%d, %d, %d \n", (int)mx, (int)my, (int)mz);
-		//	printf("ORIENTATION:::  hdg = %f  pit = %f  roll = %f \n", euler.x() * 180.0f / M_PI, euler.y() * 180.0f / M_PI, euler.z() * 180.0f / M_PI);
-		//	printf("%f, %f, %f \n", euler.x() * 180.0f / M_PI, euler.y() * 180.0f / M_PI, euler.z() * 180.0f / M_PI);
 			printf("Orientation:, %f, %f, %f, Accelerometer:, %d, %d, %d, Gyro: , %+2.2f, %+2.2f, %+2.2f, Mag:, %+3.3f, %+3.3f, %+3.3f, Quad: %d \n", 
 				euler.x() * 180.0f / M_PI,
 				euler.y() * 180.0f / M_PI,
@@ -489,43 +479,17 @@ void mpudriver::RunFilter(void)
 				my,
 				mz, //this is yaw1
 				filter.quad);
-			printf("Wings Level, %d \n", filter.wingslevel);
-			printf("DMAG[2] = , %+2.4f \n", filter.dmag[2]);
-//			printf("Orientation:, %f, %f, %f, Accelerometer:, %d, %d, %d, Gyro: , %d, %d, %d, Mag:, %d, %d, %d,  \n", 
-//				euler.x() * 180.0f / M_PI,
-//				euler.y() * 180.0f / M_PI,
-//				euler.z() * 180.0f / M_PI, 
-//				MPU9250Data[0],
-//				MPU9250Data[1],
-//				MPU9250Data[2],
-//				MPU9250Data[4],
-//				MPU9250Data[5],
-//				MPU9250Data[6],
-//				magCount[0],
-//				magCount[1],
-//				magCount[2]);
-//			float temperature = ((float) MPU9250Data[3]) / 333.87f + 21.0f;     // Gyro chip temperature in degrees Centigrade
+//			printf("Wings Level, %d \n", filter.wingslevel);
+//			printf("DMAG[2] = , %+2.4f \n", filter.dmag[2]);
 
-			// Print temperature in degrees Centigrade      
-			//printf("Gyro temperature is %+1.1f degrees C\n", temperature);  
 		}
 	}
 }
-
-//This is a test
-
-
-
-
-
 
 void mpudriver::resetAlgorithm(void)
 {
 	ax = ay = az = gx = gy = gz = mx = my = mz = 0;
 }
-
-
-
 
 bool mpudriver::getWingsLevel(void)
 {
