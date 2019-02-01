@@ -400,7 +400,7 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			}
 			
 			wingslevel = (axisstill.magyaw && axisstill.gyroyaw && ballcentered);
-			pitchlevel = (abs(1.0f - pitchmag) < 0.02) && _accelEuler[1] < 0.07;
+			pitchlevel = (abs(1.0f - pitchmag) < 0.02) && _accelEuler[1] < 0.05 && (abs(ax_) < 0.02) && axisstill.magpitch;
 			
 			if (pitchlevel)
 			{					
@@ -412,13 +412,13 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			float fm[3] = { 0.0f, 0.0f, 0.0f };
 			float fa[3] = { 0.0f, 0.0f, 0.0f };
 			
-			if (pitchlevel || (abs(1.0f - pitchmag) < 0.02f))
+			if (pitchlevel)
 			{
 				fg[1] = 0.0f;
 				fa[1] = 1.0f;
 			}	
 			
-			if (wingslevel || (abs(1.0f - rollmag) < 0.02f))
+			if ((abs(1.0f - rollmag) < 0.02f) && axisstill.gyroyaw && axisstill.magyaw)
 			{
 				fg[0] = 0.0f;
 				fa[0] = 1.0f;
@@ -426,6 +426,8 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			
 			if (wingslevel)
 			{
+				fg[0] = 0.0f;
+				fa[0] = 1.0f;
 				fg[2] = 0.0f;
 				fm[2] = 1.0f;
 			}
