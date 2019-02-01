@@ -84,19 +84,16 @@ int vsi[10];
 int vsiIndex = 0;
 
 void panelWidget::onTimer(void)
-{		
-	//add 90 to y for pitch
-	//use z for roll
-	adhr->readAll();
-	float adhrdata[6];
-	int status = adhr->getAllSixRaw(adhrdata);	
+{
+	AHRS_DATA data;
+	int status = adhr->getDataSet(&data);	
 	
-	h1->setAzimuth(adhrdata[4]); // range is 0 (up) to -180 (down)
-	h1->setAngle(adhrdata[3]);
-	dg->value = adhrdata[2];
-	vi1->setValue(airspeed::getIASMph(adhrdata[1]));
-	vi2->setValue(altitude::getAltitudeFt(adhrdata[0], vi2->setting/pow(10, vi2->settingPrec)));
-	ss->setValue(adhrdata[5]);	
+	h1->setAzimuth(data.pitch); 
+	h1->setAngle(data.roll);
+	dg->value = data.heading;
+	vi1->setValue(airspeed::getIASMph(data.aspPressurePSI));
+	vi2->setValue(altitude::getAltitudeFt(data.staticPressurePSI, vi2->setting/pow(10, vi2->settingPrec)));
+	ss->setValue(data.slip);	
 	r->setWingsLevel(adhr->getWingsLevel());
 /*
 	if (sw->value == 0) r1->setValue(0);
@@ -117,8 +114,8 @@ void panelWidget::onTimer(void)
 		if (mw->value == 5)
 		{
 			mw->setStatus(5,
-			"Pitch: " + QString::number(adhrdata[4], 'f', 2) + " Roll: " + QString::number(adhrdata[3], 'f', 2) + "\r" + "\n" +
-			"SS: " + QString::number(adhrdata[5], 'f', 2) + " Hdg: " + QString::number(adhrdata[2], 'f', 2));   // " Pres: " + QString::number(adhrdata[0], 'g', 4);
+			"Pitch: " + QString::number(data.pitch, 'f', 2) + " Roll: " + QString::number(data.roll, 'f', 2) + "\r" + "\n" +
+			"SS: " + QString::number(data.slip, 'f', 2) + " Hdg: " + QString::number(data.heading, 'f', 2));   // " Pres: " + QString::number(adhrdata[0], 'g', 4);
 		}
 		if (mw->value == 4)
 		{
@@ -240,14 +237,14 @@ void panelWidget::onDebugTimer(void)
 {
 	unsigned char offsets[22];
 	char caldata[4];
-	float adhrdata[6];
-	int status = adhr->getAllSixRaw(adhrdata);
+	AHRS_DATA data;
+	int status = adhr->getDataSet(&data);
 	
 	printf("!!! Orientation !!!");
-	printf("Pitch %3.2f", adhrdata[4]);
-	printf("Roll %3.2f" , adhrdata[3]);
-	printf("Heading %3.2f" , adhrdata[2]);
-	printf("Airspeed %3.2f", airspeed::getIASMph(adhrdata[1]));
-	printf("Altitude %5.0f" , altitude::getAltitudeFt(adhrdata[0], vi2->setting / pow(10, vi2->settingPrec)));
+	printf("Pitch %3.2f", data.pitch);
+	printf("Roll %3.2f" , data.roll);
+	printf("Heading %3.2f" , data.heading);
+	printf("Airspeed %3.2f", airspeed::getIASMph(data.aspPressurePSI));
+	printf("Altitude %5.0f" , altitude::getAltitudeFt(data.staticPressurePSI, vi2->setting / pow(10, vi2->settingPrec)));
 	
 }

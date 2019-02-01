@@ -64,21 +64,13 @@ private:
 	
 	imu::Vector<3> _Euler;
 	imu::Vector<3> _Euler_Fixed;
+	
 	imu::Vector<3> _gyroEuler;
 	imu::Vector<3> _magEuler;
 	imu::Vector<3> _accelEuler;
-	imu::Vector<3> magPrev;
+		
 	imu::Vector<3> gyroPrev;
-	imu::Vector<3> accelPrev;
-	
-	imu::Vector<3> _InitialEuler;
-	
-	//bool magyawstill;
-	//bool gyroyawstill;
-	//bool rollstill;
-	//bool pitchstill;
-	//bool ballcentered;
-	
-	
+	imu::Vector<3> magPrev;
+	imu::Vector<3> accelPrev;	
 };
 

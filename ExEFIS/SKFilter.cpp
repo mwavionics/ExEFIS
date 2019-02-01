@@ -14,11 +14,8 @@ static timeval last;
 * Module: SKFilter::SKFilter
 ***************************************************************************************************
 * @brief	init the SK Filter for AHRS
-
 * @note		
-*
 * @todo		
-*	
 * @returns			
 ***************************************************************************************************
 ***************************************************************************************************
@@ -74,11 +71,8 @@ SKFilter::SKFilter()
 * Module: SKFilter::~SKFilter
 ***************************************************************************************************
 * @brief	Deconstructor for the SK Filter AHRS
-
 * @note		
-*
 * @todo		
-*	
 * @returns			
 ***************************************************************************************************
 ***************************************************************************************************
@@ -99,11 +93,8 @@ void SKFilter::setInitializationDuration(int duration)
 * Module: SKFilter::validate
 ***************************************************************************************************
 * @brief	Validate the accel, gyro, and magnetometer readings beofer processing
-
 * @note		used to filter out HF noise from gyro, etc...
-*
 * @todo		
-*	
 * @returns	true if data is valid
 ***************************************************************************************************
 ***************************************************************************************************
@@ -160,11 +151,8 @@ bool SKFilter::validate(float gx, float gy, float gz, float ax, float ay, float 
 * Module: SKFilter::update
 ***************************************************************************************************
 * @brief	update the orientation
-
 * @note		
-*
-* @todo		
-*	
+* @todo			
 * @returns			
 ***************************************************************************************************
 ***************************************************************************************************
@@ -321,7 +309,7 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				//Set the axis still variables for initialization state
 				axisstill.magroll = (abs(dmag[0]) < 0.02f) ? true : false;
 				axisstill.magpitch = (abs(dmag[1]) < 0.02f) ? true : false;
-				axisstill.magyaw = (abs(dmag[2]) < 0.02f) ? true : false;				
+				axisstill.magyaw = (abs(dmag[2]) < 0.04f) ? true : false;				
 				
 				magPrev[0] = _magEuler[0];
 				magPrev[1] = _magEuler[1];
@@ -462,7 +450,7 @@ float SKFilter::getPitch_rad() {
 
 /* Returns the yaw angle, rad */
 float SKFilter::getYaw_rad() {
-	return constrainAngle180(_Euler.z() - _InitialEuler.z());
+	return constrainAngle180(_Euler.z());
 }
 
 /* Returns the heading angle, rad */

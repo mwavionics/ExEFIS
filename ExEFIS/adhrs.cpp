@@ -12,9 +12,18 @@
 #include <QWidget>
 
 
-/*
- *Constructor for the ADHRS class
- **/
+/**********************************************************************************************//**
+* Module: adhrs::adhrs
+***************************************************************************************************
+* @brief	Constructor for the adhrs class
+* @note		
+* @todo		
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 11/06/17 - Created & Commented
+**************************************************************************************************/
 adhrs::adhrs()
 {	
 	staticpress = new hsc_pressure();
@@ -97,14 +106,37 @@ adhrs::adhrs()
 	}
 }
 
-
+/**********************************************************************************************//**
+* Module: adhrs::~adhrs
+***************************************************************************************************
+* @brief	DeConstructor for the adhrs class
+* @note		
+* @todo		
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 11/06/17 - Created & Commented
+**************************************************************************************************/
 adhrs::~adhrs()
 {
 }
 
-
-void adhrs::readAll(void)
-{	
+/**********************************************************************************************//**
+* Module: adhrs::getAllSixRaw
+***************************************************************************************************
+* @brief	Get all 6 elements needed for the panel
+* @note		
+* @todo		
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 11/06/17 - Created & Commented
+**************************************************************************************************/
+int adhrs::getDataSet(AHRS_DATA* data)
+{			
+	int status =1;
 	int error = 1;
 	int retry = 0;
 	while (error && retry < 3)
@@ -112,38 +144,22 @@ void adhrs::readAll(void)
 		error = 0;
 		if (!error)
 		{	
-			this->euHeading = hrs->getHeading(); 
-			this->euRoll = hrs->getRoll();
-			this->euPitch = hrs->getPitch();
-			staticPressurePSI = staticpress->getPressure();
-			aspPressurePSI = airspeed->getPressure();
+			data->staticPressurePSI = staticpress->getPressure();
+			data->aspPressurePSI = airspeed->getPressure();
+			data->heading = hrs->getHeading() * (180.0f / M_PI);
+			data->roll = hrs->getRoll() * (180.0f / M_PI);
+			data->pitch = hrs->getPitch() * (180.0f / M_PI);
 			float ay = hrs->GetYAccelFiltered(&error);
-			slipRAW = -8.0f*(ay);	
+			data->slip = -8.0f*(ay);		
+		
 		}
 		retry++;
 	}
-	if (error)
+	if (error || retry >=3)
 	{		
+		status = 0;
 		qDebug() << "Read Error - 3 retrys failed" << QString::number(error, 10) << ","; 
 	}
-	
-	if (std::isnan(this->euHeading))
-	{
-		hrs->resetAlgorithm();
-	}
-}
-
-
-int adhrs::getAllSixRaw(float* data)
-{		
-	
-	int status = 0;
-	data[0] = this->staticPressurePSI;
-	data[1] = this->aspPressurePSI;
-	data[2] = (this->euHeading * (180.0f / M_PI)); //quat is in radians
-	data[3] = (this->euRoll * (180.0f / M_PI)); //quat is in radians
-	data[4] = (this->euPitch * (180.0f / M_PI)); //quat is in radians
-	data[5] = (this->slipRAW);
 	
 	return status;
 }

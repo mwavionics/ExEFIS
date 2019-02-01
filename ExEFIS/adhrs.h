@@ -14,13 +14,23 @@
 #define MAGSCALE_POS_VALID 1.2f
 #define MAGSCALE_NEG_VALID -1.2f
 
+typedef struct
+{
+	float staticPressurePSI;
+	float aspPressurePSI;
+	float heading;
+	float roll;
+	float pitch;
+	float slip;
+}AHRS_DATA;
+
 class adhrs
 {
 public:
 	adhrs();
 	~adhrs();
-	void readAll(void);
-	int getAllSixRaw(float* data);	
+
+	int getDataSet(AHRS_DATA* data);	
 	int getOffsets(char* calData);
 	int setOffsets(char* calData);
 	void getCalibration(char* cal);
@@ -31,15 +41,11 @@ private:
 	float caldata[12];
 	hsc_pressure *staticpress;
 	hsc_pressure *airspeed;
-	float staticPressurePSI;
-	float aspPressurePSI;
-	float euHeading; 
-	float euRoll;	
-	float euPitch;	
-	float slipRAW;
+	mpudriver *hrs;
+	
 	void calfile_process_line(QByteArray &line, float* data);
 	bool calfile_validate(float* data);
-	mpudriver *hrs;
+	
 	
 };
 
