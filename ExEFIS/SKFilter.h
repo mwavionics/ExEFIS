@@ -48,6 +48,7 @@ private:
 	
 	int magbufferindex = 0;
 	int accelbufferindex = 0;
+	int eulerbufferindex = 0;
 	
 	
 	

@@ -5,9 +5,11 @@
 
 const int magbuffersize = 500;
 const int accelbuffersize = 50;
+const int eulerbuffersize = 100;
 static float magbuffer[3][magbuffersize];
 static float dmagbuffer[3][magbuffersize];
 static float accelbuffer[3][accelbuffersize];
+static double eulerbuffer[3][eulerbuffersize];
 static timeval last;
 
 /**********************************************************************************************//**
@@ -385,8 +387,8 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				rollmag = sqrt((ay_*ay_) + (az_*az_));
 
 				axisstill.accelroll = (abs(_accelEuler[0] - accelPrev[0]) < 0.01f); 
-				axisstill.accelroll = (abs(_accelEuler[1] - accelPrev[1]) < 0.01f); 
-				axisstill.accelroll = (abs(_accelEuler[2] - accelPrev[2]) < 0.01f); 
+				axisstill.accelpitch = (abs(_accelEuler[1] - accelPrev[1]) < 0.01f); 
+				axisstill.accelyaw = (abs(_accelEuler[2] - accelPrev[2]) < 0.01f); 
 				
 				ballcentered = abs(ay_) < 0.07f ? true : false;
 				
@@ -400,7 +402,7 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			}
 			
 			wingslevel = (axisstill.magyaw && axisstill.gyroyaw && ballcentered);
-			pitchlevel = (abs(1.0f - pitchmag) < 0.02) && _accelEuler[1] < 0.05 && (abs(ax_) < 0.02) && axisstill.magpitch;
+			pitchlevel = (abs(1.0f - pitchmag) < 0.02) && _accelEuler[1] < 0.05 && (abs(ax_) < 0.02) && axisstill.magpitch && axisstill.accelpitch;
 			
 			if (pitchlevel)
 			{					
@@ -416,7 +418,13 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			{
 				fg[1] = 0.0f;
 				fa[1] = 1.0f;
-			}	
+			}
+			
+			if (axisstill.accelpitch && axisstill.magpitch)
+			{
+				fg[1] = 0.0f;
+				fa[1] = 1.0f;
+			}
 			
 			if ((abs(1.0f - rollmag) < 0.02f) && axisstill.gyroyaw && axisstill.magyaw)
 			{
@@ -433,9 +441,11 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			}
 			
 			//Don't need the "spring" with the fixed Euler with the current setup
+		
 			_Euler[0] = (fg[0]*_gyroEuler[0]) + (fm[0]*_magEuler[0]) + (fa[0]*_accelEuler[0]); //+ _Euler_Fixed[0];
 			_Euler[1] = (fg[1]*_gyroEuler[1]) + (fm[1]*_magEuler[1]) + (fa[1]*_accelEuler[1]); //+ _Euler_Fixed[1];
 			_Euler[2] = (fg[2]*_gyroEuler[2]) + (fm[2]*_magEuler[2]) + (fa[2]*_accelEuler[2]);// + _Euler_Fixed[2];
+				
 		}
 	}	
 }
