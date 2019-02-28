@@ -38,7 +38,7 @@ public:
 	
 	
 private:
-	float caldata[12];
+	float caldata[24];
 	hsc_pressure *staticpress;
 	hsc_pressure *airspeed;
 	mpudriver *hrs;

@@ -75,6 +75,7 @@ static float* pGyroBias;
 static float* pAccelBias; 
 static float* pMagBias; 
 static float* pMagScale;
+static float* pAxisRemap;
 
 int GyroRaw[3] = { 
 	//1344,
@@ -95,7 +96,8 @@ static float   magCalibration[3];
 // Bias corrections for gyro and accelerometer. These can be measured once and
 // entered here or can be calculated each time the device is powered on.
 static float gyroBias[3], accelBias[3] = { 0, 0, 0 }, 
-	magBias[3] = { 36.899, 205.580, -365.1833 }, magScale[3] = { 1, 1, 1 }; 
+	magBias[3] = { 36.899, 205.580, -365.1833 }, magScale[3] = { 1, 1, 1 },
+    axisremap[3] = { 2.0, 1.0, 0.0 }; 
 
 //static float gyroBias[3] = {, accelBias[3], magBias[3] = { 0, 0, 0 }, magScale[3] = { 1, 1, 1 }; 
 
@@ -113,19 +115,21 @@ mpudriver::mpudriver()
 	pAccelBias = accelBias; 
 	pMagBias = magBias; 
 	pMagScale = magScale;
+	pAxisRemap = axisremap;
 	
 	filter = SKFilter();
 	
 	printf("Created MPU9250 9-axis motion sensor...\n");	
 }
 
-mpudriver::mpudriver(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale)
+mpudriver::mpudriver(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale, float* ppAxisRemap)
 	: mpudriver()
 {	
 	pGyroBias = ppGyroBias; 
 	pAccelBias = ppAccelBias; 
 	pMagBias = ppMagBias; 
 	pMagScale = ppMagScale;
+	pAxisRemap = ppAxisRemap;
 }
 
 int mpudriver::Init(bool doSelfTest, bool doCalibration, bool doMagCalibration)
@@ -428,10 +432,40 @@ void mpudriver::RunFilter(void)
 		//The Y Vector points to the wings
 		//The Z Vector points to the front of the airplane
 		
-		if(filter.validate(gz*M_PI / 180.0f, -gy*M_PI / 180.0f, -gx*M_PI / 180.0f, az, ay, ax, mz, mx, my))
+		//[axis] [g,a,m]
+		float imudata[3][3];
+		float mappedimudata[3][3];
+		imudata[0][0] = gx; imudata[0][1] = ax; imudata[0][2] = mx;
+		imudata[1][0] = gy; imudata[1][1] = ay; imudata[1][2] = my;
+		imudata[2][0] = gz; imudata[2][1] = az; imudata[2][2] = mz;			
+		
+		int remap0 = (int)pAxisRemap[0];
+		int remap1 = (int)pAxisRemap[1];
+		int remap2 = (int)pAxisRemap[2];			
+		
+		mappedimudata[remap0][0] = gx; mappedimudata[remap0][1] = ax; mappedimudata[remap0][2] = mx;
+		mappedimudata[remap1][0] = gy; mappedimudata[remap1][1] = ay; mappedimudata[remap1][2] = my;
+		mappedimudata[remap2][0] = gz; mappedimudata[remap2][1] = az; mappedimudata[remap2][2] = mz;
+		
+		mappedimudata[0][0] *= pAxisRemap[3]*M_PI / 180.0f; mappedimudata[0][1] *= pAxisRemap[4]; mappedimudata[0][2] *= pAxisRemap[5];
+		mappedimudata[1][0] *= pAxisRemap[6]*M_PI / 180.0f; mappedimudata[1][1] *= pAxisRemap[7]; mappedimudata[1][2] *= pAxisRemap[8];
+		mappedimudata[2][0] *= pAxisRemap[9]*M_PI / 180.0f; mappedimudata[2][1] *= pAxisRemap[10]; mappedimudata[2][2] *= pAxisRemap[11];
+		
+		
+		if (filter.validate(mappedimudata[0][0], mappedimudata[1][0], mappedimudata[2][0], 
+				mappedimudata[0][1], mappedimudata[1][1], mappedimudata[2][1], 
+				mappedimudata[0][2], mappedimudata[1][2], mappedimudata[2][2]))
 		{
 		
-			filter.update(gz*M_PI / 180.0f, -gy*M_PI / 180.0f, -gx*M_PI / 180.0f, az, ay, ax, mz, mx, my);
+			filter.update(mappedimudata[0][0],
+				mappedimudata[1][0],
+				mappedimudata[2][0], 
+				mappedimudata[0][1],
+				mappedimudata[1][1],
+				mappedimudata[2][1], 
+				mappedimudata[0][2],
+				mappedimudata[1][2],
+				mappedimudata[2][2]);
 			//filter.getQuaternion(&quatW[quatIndex], &quatX[quatIndex], &quatY[quatIndex], &quatZ[quatIndex]);		
 		}
 		

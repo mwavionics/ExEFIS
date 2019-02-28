@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 	
 	/* Start some String outputs in case you are launching the app with loggint enabled */
 	qDebug("****************** LOG BEGINS HERE **************************");
-	qDebug("Version 3.0 - Kitfox Test");
+	qDebug("Version 5.1 - Continued Test");
 	
 	system("cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2");
 	system("gpio mode 26 out");

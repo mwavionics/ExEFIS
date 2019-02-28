@@ -52,8 +52,22 @@ adhrs::adhrs()
 	magScale[1] = 1;
 	magScale[2] = 1;	
 	
+	static float axisremap[12];
+	axisremap[0] = 2.0; //zaxis on imu is x axis for EFIS
+	axisremap[1] = 1.1;  //yaxis on imu is y axis for EFIS
+	axisremap[2] = 0.1;  //xaxis on imu is z axis for EFIS
+	axisremap[3] = 1.0;  //xaxis gyro for EFIS is not inverted
+	axisremap[4] = 1.0;   //xaxis accel for EFIS is not inverted
+	axisremap[5] = 1.0;   //xaxis mag for EFIS is not inverted
+	axisremap[6] = -1.0;   //yaxis gyro for EFIS is inverted
+	axisremap[7] = 1.0;    //yaxis accel for EFIS is not inverted
+	axisremap[8] = 1.0;    //yaxis mag for EFIS is not inverted
+	axisremap[9] = -1.0;   //zaxis gyro for EFIS is not inverted
+	axisremap[10] = 1.0;    //zaxis accel for EFIS is not inverted
+	axisremap[11] = 1.0;    //zaxis mag for EFIS is not inverted
+	
 	//Initialize the caldata to all invalid values
-	for (int i = 0; i < 12; i++)
+	for (int i = 0; i < 15; i++)
 	{
 		caldata[i] = 10000.0f;
 	}	
@@ -92,7 +106,7 @@ adhrs::adhrs()
 				if (cal) 
 				{
 					qDebug() << "found valid caldata" << calfile->fileName();
-					mpudriver *hrs = new mpudriver(&caldata[0], &caldata[3], &caldata[6], &caldata[9]);				
+					mpudriver *hrs = new mpudriver(&caldata[0], &caldata[3], &caldata[6], &caldata[9], &caldata[12]);				
 					int s = hrs->Init(true, false, false);
 				}				
 			}			
@@ -101,7 +115,7 @@ adhrs::adhrs()
 	if (!cal)
 	{			
 		qDebug() << "using zero'd caldata, no file found" ;
-		mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale);				
+		mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale, axisremap);				
 		int s = hrs->Init(true, false, false);		
 	}
 }
@@ -251,6 +265,67 @@ void adhrs::calfile_process_line(QByteArray &line, float* data)
 		float val = line.split('"')[1].toFloat();
 		data[11] = val;	
 	}
+	if (line.startsWith("X axis Mapping"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[12] = val;
+	}
+	if (line.startsWith("Y axis Mapping"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[13] = val;
+	}
+	if (line.startsWith("Z axis Mapping"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[14] = val;
+	}
+	if (line.startsWith("X axis Gryo Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[15] = val;
+	}
+	if (line.startsWith("X axis Accel Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[16] = val;
+	}
+	if (line.startsWith("X axis Mag Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[17] = val;
+	}
+	if (line.startsWith("Y axis Gryo Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[18] = val;
+	}
+	if (line.startsWith("Y axis Accel Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[19] = val;
+	}
+	if (line.startsWith("Y axis Mag Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[20] = val;
+	}
+	if (line.startsWith("Z axis Gryo Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[21] = val;
+	}
+	if (line.startsWith("Z axis Accel Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[22] = val;
+	}
+	if (line.startsWith("Z axis Mag Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[23] = val;
+	}
+
 }
 
 

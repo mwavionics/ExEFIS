@@ -31,7 +31,7 @@ public:
 	
 	
 	mpudriver();
-	mpudriver(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale);
+	mpudriver(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale, float* ppAxisRemap);
 	~mpudriver();
 	int Init(bool doSelfTest, bool doCalibration, bool doMagCalibration);
 	int GetAccelStatus(void);
