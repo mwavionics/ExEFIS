@@ -54,7 +54,7 @@ static float pitchbuffer[buffersize];
 static float rollbuffer[buffersize];
 static float yawbuffer[buffersize];
 
-static float yaccelbuffer[buffersize];
+static float accelbuffer[3][buffersize];
 
 static struct timeval start;
 
@@ -349,7 +349,7 @@ float mpudriver::GetYAccelFiltered(int* status)
 	float ret = 0.0f;
 	for (int i = 0; i < buffersize; i++)
 	{
-		ret  += yaccelbuffer[i];
+		ret  += accelbuffer[1][i];
 	}
 	ret /= buffersize;
 	return ret;
@@ -472,7 +472,9 @@ void mpudriver::RunFilter(void)
 		rollbuffer[quatIndex] = filter.getRoll_rad();		
 		pitchbuffer[quatIndex] = filter.getPitch_rad(); 					
 		//yawbuffer[quatIndex] = filter.getHeading_rad();
-		yaccelbuffer[quatIndex] = ay;
+		accelbuffer[0][quatIndex] = mappedimudata[0][1];
+		accelbuffer[1][quatIndex] = mappedimudata[1][1];
+		accelbuffer[2][quatIndex] = mappedimudata[2][1];
 	
 		quatIndex++;
 		if (quatIndex > buffersize) quatIndex = 0;
