@@ -11,8 +11,8 @@ TEMPLATE = app
 
 #By default the following file lists are updated automatically by VisualGDB.
 
-SOURCES   += adhrs.cpp airspeed.cpp altitude.cpp directional_gyro.cpp ExEFIS.cpp horizon_instrument.cpp HRS_9250.cpp hsc_pressure.cpp knobs.cpp DiagWidget.cpp MenuWidget.cpp MPU9250.cpp panelWidget.cpp reticle.cpp RotaryEncoder.cpp round_instrument.cpp SKFilter.cpp slipskid_instrument.cpp spidriver.cpp SplashWidget.cpp StatusWidget.cpp vertical_instrument.cpp PiTransfer.cpp
-HEADERS   += adhrs.h airspeed.h altitude.h ByteTransfer.h directional_gyro.h horizon_instrument.h HRS_9250.h hsc_pressure.h knobs.h Matrix.h MenuWidget.h MPU9250.h panelWidget.h Quaternion.h quaternionFilters.h reticle.h RotaryEncoder.h round_instrument.h SKFilter.h slipskid_instrument.h spidriver.h SplashWidget.h StatusWidget.h Vector.h vertical_instrument.h PiTransfer.h DiagWidget.h
+SOURCES   += adhrs.cpp airspeed.cpp altitude.cpp candriver.cpp directional_gyro.cpp ExEFIS.cpp horizon_instrument.cpp mpudriver.cpp hsc_pressure.cpp knobs.cpp DiagWidget.cpp MenuWidget.cpp MPU9250.cpp panelWidget.cpp reticle.cpp RotaryEncoder.cpp round_instrument.cpp SKFilter.cpp slipskid_instrument.cpp spidriver.cpp SplashWidget.cpp StatusWidget.cpp vertical_instrument.cpp PiTransfer.cpp
+HEADERS   += adhrs.h airspeed.h altitude.h ByteTransfer.h candriver.h directional_gyro.h horizon_instrument.h mpudriver.h hsc_pressure.h knobs.h Matrix.h MenuWidget.h MPU9250.h panelWidget.h Quaternion.h quaternionFilters.h reticle.h RotaryEncoder.h round_instrument.h SKFilter.h slipskid_instrument.h spidriver.h SplashWidget.h StatusWidget.h Vector.h vertical_instrument.h PiTransfer.h DiagWidget.h
 FORMS     += 
 RESOURCES += img.qrc
 

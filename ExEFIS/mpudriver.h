@@ -4,7 +4,7 @@
 #include "PiTransfer.h"
 #include "MPU9250.h"
 
-struct HRS_CAL
+struct MPU_CAL
 {
 	float magx;
 	float magy;
@@ -23,29 +23,30 @@ struct INFO_9250
 };
 
 
-class HRS_9250
+class mpudriver
 {
 public:
 	
 	static void imuInterruptHander(int gpio, int level, uint32_t tick);
 	
 	
-	HRS_9250();
-	HRS_9250(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale);
-	~HRS_9250();
+	mpudriver();
+	mpudriver(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale, float* ppAxisRemap);
+	~mpudriver();
 	int Init(bool doSelfTest, bool doCalibration, bool doMagCalibration);
 	int GetAccelStatus(void);
 	int GetMagStatus(void);
 	int GetGyrStatus(void);
 	int Get9250Info(INFO_9250* info);
-	int SetCalibration(HRS_CAL* cal);
-	int GetCalibration(HRS_CAL* cal);
+	int SetCalibration(MPU_CAL* cal);
+	int GetCalibration(MPU_CAL* cal);
 	imu::Vector<3> GetEuler(int* status);
 	imu::Vector<3> GetAccelerometer(int*status);
 	float GetYAccelFiltered(int* status);
 	float getRoll(void);
 	float getPitch(void);
 	float getHeading(void);
+	bool getWingsLevel(void);	
 	/* Returns the roll angle, rad */
 //	float getRoll_rad() {
 //		return filter.getRoll_rad();
@@ -72,6 +73,7 @@ public:
 private:
 	PiI2C *mpu;
 	PiI2C *mag;
+	
 
 	
 

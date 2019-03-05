@@ -1,8 +1,9 @@
 #include "adhrs.h"
-#include "HRS_9250.h"
+#include "mpudriver.h"
 #include "hsc_pressure.h"
 #include <QApplication>
 #include <QFile>
+#include <QDir>
 #include <QByteArray>
 #include <QString>
 #include <math.h>
@@ -11,176 +12,168 @@
 #include <QWidget>
 
 
-
+/**********************************************************************************************//**
+* Module: adhrs::adhrs
+***************************************************************************************************
+* @brief	Constructor for the adhrs class
+* @note		
+* @todo		
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 11/06/17 - Created & Commented
+**************************************************************************************************/
 adhrs::adhrs()
-{
-	
+{	
 	staticpress = new hsc_pressure();
 	staticpress->set_params(15, 0);
 	airspeed = new hsc_pressure(1);
 	airspeed->set_params(1, -1);
 
-	/* Current Kitfox Values 10/12/18 */
+	//NOTE: these are static so that the pigpio callback for the interrupt has access to them
 	static float gyroBias[3];
-	gyroBias[0] = 0.70;
-	gyroBias[1] = 0.68;
-	gyroBias[2] = 0.60;	
+	gyroBias[0] = 0.0;
+	gyroBias[1] = 0.0;
+	gyroBias[2] = 0.0;	
 	
 	static float accelBias[3];
-	accelBias[0]  = -0.021;
-	accelBias[1] = 0.026;
-	accelBias[2] = -0.24;
+	accelBias[0] = 0;
+	accelBias[1] = 0;
+	accelBias[2] = 0;
 	
 	static float magBias[3];
-	magBias[0] = 79.596497;
-	magBias[1] = 213.663010;
-	magBias[2] = -576.351318;
+	magBias[0] = 0;
+	magBias[1] = 0;
+	magBias[2] = 0;
 	
 	static float magScale[3];
-	magScale[0] = 0.984127;
-	magScale[1] = 0.988048;
-	magScale[2] = 1.029046;
+	magScale[0] = 1;
+	magScale[1] = 1;
+	magScale[2] = 1;	
 	
-/* ****END Current Kitfox values 10/12/18**** */
+	static float axisremap[12];
+	axisremap[0] = 2.0; //zaxis on imu is x axis for EFIS
+	axisremap[1] = 1.1;  //yaxis on imu is y axis for EFIS
+	axisremap[2] = 0.1;  //xaxis on imu is z axis for EFIS
+	axisremap[3] = 1.0;  //xaxis gyro for EFIS is not inverted
+	axisremap[4] = 1.0;   //xaxis accel for EFIS is not inverted
+	axisremap[5] = 1.0;   //xaxis mag for EFIS is not inverted
+	axisremap[6] = -1.0;   //yaxis gyro for EFIS is inverted
+	axisremap[7] = 1.0;    //yaxis accel for EFIS is not inverted
+	axisremap[8] = 1.0;    //yaxis mag for EFIS is not inverted
+	axisremap[9] = -1.0;   //zaxis gyro for EFIS is not inverted
+	axisremap[10] = 1.0;    //zaxis accel for EFIS is not inverted
+	axisremap[11] = 1.0;    //zaxis mag for EFIS is not inverted
 	
+	//Initialize the caldata to all invalid values
+	for (int i = 0; i < 15; i++)
+	{
+		caldata[i] = 10000.0f;
+	}	
 	
-/* Current Test Unit Values     */
-//	static float gyroBias[3];
-//	gyroBias[0] = -1.8;
-//	gyroBias[1] = 0.25;
-//	gyroBias[2] = .55;
-//	
-//	static float accelBias[3];
-//	accelBias[0]  = -0.019;
-//	accelBias[1] = 0.023;
-//	accelBias[2] = 0.050;
-//	
-//	static float magBias[3];
-//	magBias[0] = -68.9835;
-//	magBias[1] = 236.0305;
-//	magBias[2] = -290.741;
-//	
-//	static float magScale[3];
-//	magScale[0] = 0.981525;
-//	magScale[1] = 1.053538;
-//	magScale[2] = 0.968996;
-	
-/* ****END Current Test Unit values 10/12/18**** */
-	
-//	X - Axis sensitivity adjustment value + 1.18
-//Y - Axis sensitivity adjustment value + 1.19
-//Z - Axis sensitivity adjustment value + 1.14
-	
-	
-	
-	//bno055 = new BNO055(BNO055_ID, BNO055_ADDRESS_A);
-	//bno055->begin(BNO055::OPERATION_MODE_NDOF);
-	
+	/* Search the /home/pi directory for a sensor cal file
+	 * This has been udpated to allow sensorcal_serialnumber.txt files
+	 * This way MW Avionics can keep sensorcal files as backups for each SN*/
 	bool cal = false;
-	QFile *calfile = new QFile("/home/pi/sensorcal.txt");
-	if (calfile->exists())
+	QDir directory("/home/pi");
+	qDebug() << "Searching " << directory.path() << " for calibration file";
+	QFileInfoList files = directory.entryInfoList(QStringList() << "*.txt" << "*.TXT", QDir::Files);
+	QString filename = NULL;
+	int num = files.count();
+	for (int i = 0; i < num; i++)
 	{
-		if (calfile->open(QIODevice::ReadOnly))
+		QString fn = files.at(i).fileName();		
+		if (fn.contains("sensorcal", Qt::CaseInsensitive))
 		{
-			while (!calfile->atEnd()) {
-				QByteArray line = calfile->readLine();
-				calfile_process_line(line, caldata);
-			}
-			/* do we calibrate?*/
-			cal = calfile_validate(caldata);
-			if (cal) 
-			{
-				qDebug() << "found valid caldata" << calfile->fileName();
-				//float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale
-				HRS_9250 *hrs = new HRS_9250(&caldata[0], &caldata[3], &caldata[6], &caldata[9]);				
-				//HRS_9250 *hrs = new HRS_9250;
-				int s = hrs->Init(true, false, false);
-			}
-			else
-			{
-				//float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale
-				HRS_9250 *hrs = new HRS_9250(gyroBias, accelBias, magBias, magScale);
-				//HRS_9250 *hrs = new HRS_9250;
-				int s = hrs->Init(true, false, false);
-			}
-		}
-		else
-		{
-			//float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale
-			HRS_9250 *hrs = new HRS_9250(gyroBias, accelBias, magBias, magScale);
-			//HRS_9250 *hrs = new HRS_9250;
-			int s = hrs->Init(true, false, false);
+			filename = files.at(i).filePath();			
 		}
 	}
-	else
-	{
-		//float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale
-		HRS_9250 *hrs = new HRS_9250(gyroBias, accelBias, magBias, magScale);
-		//HRS_9250 *hrs = new HRS_9250;
-		int s = hrs->Init(true, false, false);
+	if (filename != NULL)
+	{	
+		QFile *calfile = new QFile(filename);
+		if (calfile->exists())
+		{
+			qDebug() << "calfile exists" << calfile->fileName();
+			if (calfile->open(QIODevice::ReadOnly))
+			{
+				while (!calfile->atEnd()) {
+					QByteArray line = calfile->readLine();
+					calfile_process_line(line, caldata);
+				}
+				/* do we calibrate?*/
+				cal = calfile_validate(caldata);
+				if (cal) 
+				{
+					qDebug() << "found valid caldata" << calfile->fileName();
+					mpudriver *hrs = new mpudriver(&caldata[0], &caldata[3], &caldata[6], &caldata[9], &caldata[12]);				
+					int s = hrs->Init(true, false, false);
+				}				
+			}			
+		}		
 	}
-
-	//bno055->begin(cal, BNO055::OPERATION_MODE_NDOF, caldata); //used to be IMUPLUS
-	
-//	if (!bno055->isFullyCalibrated())
-//	{
-		//while (1)
-			;
-//	}
+	if (!cal)
+	{			
+		qDebug() << "using zero'd caldata, no file found" ;
+		mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale, axisremap);				
+		int s = hrs->Init(true, false, false);		
+	}
 }
 
-
+/**********************************************************************************************//**
+* Module: adhrs::~adhrs
+***************************************************************************************************
+* @brief	DeConstructor for the adhrs class
+* @note		
+* @todo		
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 11/06/17 - Created & Commented
+**************************************************************************************************/
 adhrs::~adhrs()
 {
 }
 
-
-void adhrs::readAll(void)
-{	
-	//imu::Vector<3> v = bno055->getVector(BNO055::adafruit_vector_type_t::VECTOR_EULER);	
+/**********************************************************************************************//**
+* Module: adhrs::getAllSixRaw
+***************************************************************************************************
+* @brief	Get all 6 elements needed for the panel
+* @note		
+* @todo		
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 11/06/17 - Created & Commented
+**************************************************************************************************/
+int adhrs::getDataSet(AHRS_DATA* data)
+{			
+	int status =1;
 	int error = 1;
 	int retry = 0;
 	while (error && retry < 3)
 	{		
 		error = 0;
-		//imu::Quaternion q = bno055->getQuat(&error);
-		//imu::Vector<3> v = hrs->GetEuler(&error);
 		if (!error)
 		{	
-			//imu::Vector<3> v = q.toEuler();
-			this->euHeading = hrs->getHeading(); 
-			;    //page 35 in BNO055 manual for order here
-			this->euRoll = hrs->getRoll();
-			this->euPitch = hrs->getPitch();
-			staticPressurePSI = staticpress->getPressure();
-			aspPressureMBAR = airspeed->getPressure();
+			data->staticPressurePSI = staticpress->getPressure();
+			data->aspPressurePSI = airspeed->getPressure();
+			data->heading = hrs->getHeading() * (180.0f / M_PI);
+			data->roll = hrs->getRoll() * (180.0f / M_PI);
+			data->pitch = hrs->getPitch() * (180.0f / M_PI);
 			float ay = hrs->GetYAccelFiltered(&error);
-			slipRAW = -8.0f*(ay);	
+			data->slip = -8.0f*(ay);		
+		
 		}
 		retry++;
 	}
-	if (error)
+	if (error || retry >=3)
 	{		
+		status = 0;
 		qDebug() << "Read Error - 3 retrys failed" << QString::number(error, 10) << ","; 
 	}
-	
-	if (std::isnan(this->euHeading))
-	{
-		hrs->resetAlgorithm();
-	}
-}
-
-
-int adhrs::getAllSixRaw(float* data)
-{		
-	
-	int status = 0;
-	data[0] = this->staticPressurePSI;
-	data[1] = this->aspPressureMBAR;
-	data[2] = (this->euHeading * (180.0f / M_PI)); //quat is in radians
-	data[3] = (this->euRoll * (180.0f / M_PI)); //quat is in radians
-	data[4] = (this->euPitch * (180.0f / M_PI)); //quat is in radians
-	data[5] = (this->slipRAW);
 	
 	return status;
 }
@@ -272,11 +265,99 @@ void adhrs::calfile_process_line(QByteArray &line, float* data)
 		float val = line.split('"')[1].toFloat();
 		data[11] = val;	
 	}
+	if (line.startsWith("X axis Mapping"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[12] = val;
+	}
+	if (line.startsWith("Y axis Mapping"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[13] = val;
+	}
+	if (line.startsWith("Z axis Mapping"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[14] = val;
+	}
+	if (line.startsWith("X axis Gryo Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[15] = val;
+	}
+	if (line.startsWith("X axis Accel Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[16] = val;
+	}
+	if (line.startsWith("X axis Mag Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[17] = val;
+	}
+	if (line.startsWith("Y axis Gryo Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[18] = val;
+	}
+	if (line.startsWith("Y axis Accel Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[19] = val;
+	}
+	if (line.startsWith("Y axis Mag Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[20] = val;
+	}
+	if (line.startsWith("Z axis Gryo Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[21] = val;
+	}
+	if (line.startsWith("Z axis Accel Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[22] = val;
+	}
+	if (line.startsWith("Z axis Mag Sign"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		data[23] = val;
+	}
+
 }
 
 
 bool adhrs::calfile_validate(float* data)
 {
+	bool valid = true;
+	//Gyro
+	if (data[0] > GYRO_POS_VALID || data[0] < GYRO_NEG_VALID) valid = false;
+	if (data[1] > GYRO_POS_VALID || data[1] < GYRO_NEG_VALID) valid = false;
+	if (data[2] > GYRO_POS_VALID || data[2] < GYRO_NEG_VALID) valid = false;
+	
+	//Accel	
+	if (data[3] > ACCEL_POS_VALID || data[3] < ACCEL_NEG_VALID) valid = false;
+	if (data[4] > ACCEL_POS_VALID || data[4] < ACCEL_NEG_VALID) valid = false;
+	if (data[5] > ACCEL_POS_VALID || data[5] < ACCEL_NEG_VALID) valid = false;
+	
+	//Mag Offset
+	if (data[6] > MAGBIAS_POS_VALID || data[6] < MAGBIAS_NEG_VALID) valid = false;
+	if (data[7] > MAGBIAS_POS_VALID || data[7] < MAGBIAS_NEG_VALID) valid = false;
+	if (data[8] > MAGBIAS_POS_VALID || data[8] < MAGBIAS_NEG_VALID) valid = false;
+	
+	//Mag Scale
+	if (data[9] > MAGSCALE_POS_VALID || data[9] < MAGSCALE_NEG_VALID) valid = false;
+	if (data[10] > MAGSCALE_POS_VALID || data[10] < MAGSCALE_NEG_VALID) valid = false;
+	if (data[11] > MAGSCALE_POS_VALID || data[11] < MAGSCALE_NEG_VALID) valid = false;
+	
 	return (true);
 }
 
+
+
+bool adhrs::getWingsLevel(void)
+{
+	return hrs->getWingsLevel();
+}

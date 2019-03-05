@@ -1,8 +1,8 @@
 #pragma once
 
-#include <QWidget.h>
+#include <QWidget>
 #include <QTimer>
-#include <QPen.h>
+#include <QPen>
 
 class vertical_instrument :public QWidget
 {

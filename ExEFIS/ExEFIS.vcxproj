@@ -77,10 +77,11 @@
     <ClCompile Include="adhrs.cpp" />
     <ClCompile Include="airspeed.cpp" />
     <ClCompile Include="altitude.cpp" />
+    <ClCompile Include="candriver.cpp" />
     <ClCompile Include="directional_gyro.cpp" />
     <ClCompile Include="ExEFIS.cpp" />
     <ClCompile Include="horizon_instrument.cpp" />
-    <ClCompile Include="HRS_9250.cpp" />
+    <ClCompile Include="mpudriver.cpp" />
     <ClCompile Include="hsc_pressure.cpp" />
     <ClCompile Include="knobs.cpp" />
     <ClCompile Include="DiagWidget.cpp" />
@@ -101,9 +102,10 @@
     <ClInclude Include="airspeed.h" />
     <ClInclude Include="altitude.h" />
     <ClInclude Include="ByteTransfer.h" />
+    <ClInclude Include="candriver.h" />
     <ClInclude Include="directional_gyro.h" />
     <ClInclude Include="horizon_instrument.h" />
-    <ClInclude Include="HRS_9250.h" />
+    <ClInclude Include="mpudriver.h" />
     <ClInclude Include="hsc_pressure.h" />
     <ClInclude Include="knobs.h" />
     <ClInclude Include="Matrix.h" />

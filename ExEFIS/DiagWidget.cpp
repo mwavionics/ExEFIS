@@ -81,25 +81,23 @@ void DiagWidget::setKnobs(knobs *k)
 }
 
 void DiagWidget::pollTimerExp(void)
-{
-	
-	adhr->readAll();
-	float adhrdata[6];
-	int status = adhr->getAllSixRaw(adhrdata);
+{	
+	AHRS_DATA data;
+	int status = adhr->getDataSet(&data);	
 	
 	textEditadhrs->setText(
 		QString("Static Press (psi)") + '\r' + '\n' +
-		QString::number(adhrdata[0], 'f', 3) + '\r' + '\n' +
+		QString::number(data.staticPressurePSI, 'f', 3) + '\r' + '\n' +
 		"Pitot Press (mBar)" + '\r' + '\n' +
-		QString::number(adhrdata[1], 'f', 4) + '\r' + '\n' +
+		QString::number(data.aspPressurePSI, 'f', 4) + '\r' + '\n' +
 		+ '\r' + '\n' +
 		"Orientation (deg)" + '\r' + '\n' +
-		QString::number(adhrdata[2], 'f', 3) + '\r' + '\n' +
-		QString::number(adhrdata[3], 'f', 3) + '\r' + '\n' + 
-		QString::number(adhrdata[4], 'f', 3) + '\r' + '\n'  +
+		QString::number(data.roll, 'f', 3) + '\r' + '\n' +
+		QString::number(data.pitch, 'f', 3) + '\r' + '\n' + 
+		QString::number(data.heading, 'f', 3) + '\r' + '\n'  +
 		+ '\r' + '\n'  +
 		"Slip Skid in X" + '\r' + '\n' +
-		QString::number(adhrdata[5], 'f', 2)
+		QString::number(data.slip, 'f', 2)
 		);
 	
 	textEditknobs->setText(QString::number( knob->right->getValue() ) + '\r' + '\n' +

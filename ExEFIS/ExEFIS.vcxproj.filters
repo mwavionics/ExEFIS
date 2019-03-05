@@ -84,9 +84,6 @@
     <ClCompile Include="MPU9250.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
-    <ClCompile Include="HRS_9250.cpp">
-      <Filter>Source files</Filter>
-    </ClCompile>
     <ClCompile Include="round_instrument.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
@@ -102,11 +99,20 @@
     <ClCompile Include="PiTransfer.cpp">
       <Filter>Source files</Filter>
     </ClCompile>
+    <ClCompile Include="candriver.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
+    <ClCompile Include="mpudriver.cpp">
+      <Filter>Source files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="ExEFIS.pro" />
     <None Include="img.qrc">
       <Filter>Resource files</Filter>
+    </None>
+    <None Include="Eigen\Eigen">
+      <Filter>Header files</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -170,9 +176,6 @@
     <ClInclude Include="ByteTransfer.h">
       <Filter>Header files</Filter>
     </ClInclude>
-    <ClInclude Include="HRS_9250.h">
-      <Filter>Header files</Filter>
-    </ClInclude>
     <ClInclude Include="quaternionFilters.h">
       <Filter>Header files</Filter>
     </ClInclude>
@@ -189,6 +192,12 @@
       <Filter>Header files</Filter>
     </ClInclude>
     <ClInclude Include="PiTransfer.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="candriver.h">
+      <Filter>Header files</Filter>
+    </ClInclude>
+    <ClInclude Include="mpudriver.h">
       <Filter>Header files</Filter>
     </ClInclude>
   </ItemGroup>

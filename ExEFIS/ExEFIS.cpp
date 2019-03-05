@@ -1,9 +1,11 @@
 #include <QApplication>
 #include <QStackedWidget>
+#include <QVBoxLayout>
 #include <QProcess>
 #include <QWidget>
 #include <QScreen>
 #include <QThread>
+#include <QDebug>
 #include <iostream>
 #include <pigpio.h>
 
@@ -20,7 +22,12 @@ int main(int argc, char *argv[])
 	
 	/* Start some String outputs in case you are launching the app with loggint enabled */
 	qDebug("****************** LOG BEGINS HERE **************************");
-	qDebug("Version 3.0 - Kitfox Test");
+	qDebug("Version 5.2 - Continued Test - fixed ss with remap");
+	
+	system("cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2");
+	system("gpio mode 26 out");
+	system("gpio write 26 0");
+	system("i2cset -y 1 0x2f 0x00 0x0000 w");
 	
 	QApplication a(argc, argv);
 	
@@ -30,7 +37,7 @@ int main(int argc, char *argv[])
 	QRect  screenGeometry = screen->geometry();
 	
 	/* Now that we're using pigpio, initialize the library */
-	if (gpioInitialise() < 0) printf("ERROR: Can't initialize");
+	if (gpioInitialise() < 0) qDebug("ERROR: Can't initialize");
 	
 	knobs *k = new knobs();	
 	adhrs *ad = new adhrs();	
@@ -40,36 +47,29 @@ int main(int argc, char *argv[])
 	panelWidget *p = new panelWidget();
 	p->setADHRS(ad);
 	p->setKNOBS(k);
-	p->showFullScreen();
-	p->update();
+	//p->showFullScreen();
+	//p->update();
 	
 	p->setCursor(Qt::BlankCursor);
 	
 	
-//	SplashWidget *s = new SplashWidget(0, ad, k);
-//	s->showFullScreen();
-//	s->update();
+	SplashWidget *s = new SplashWidget(0, ad, k);
+
 	
-//m->setADHRS(ad);
-//m->setKnobs(k);
-//	m->showFullScreen();
+	//m->setADHRS(ad);
+	//m->setKnobs(k);
+	//m->showFullScreen();
 	
-//	w->addWidget(s);
-//	w->addWidget(p);
+	w->addWidget(s);
+	w->addWidget(p);
 //	w->addWidget(m);
 	
-	//s->setParent(w);
-	//p->setParent(p);
-	//m->setParent(m);
+
 	//QStackedWidget::connect(p, SIGNAL(launchDiag(int)), w, SLOT(setCurrentIndex(int)));
-//	QStackedWidget::connect(s, SIGNAL(launchPanel(int)), w, SLOT(setCurrentIndex(int)));
-//	QApplication::connect(s, SIGNAL(closeStacked()), w, SLOT(quit()));
+	QStackedWidget::connect(s, SIGNAL(launchPanel(int)), w, SLOT(setCurrentIndex(int)));
 	w->setCurrentIndex(0);
-//	w->showFullScreen();
-//	w->update();
-	
-	//panelWidget *w = new panelWidget();
-	//w->showFullScreen();
+
+	w->showFullScreen();
 	
 
 	

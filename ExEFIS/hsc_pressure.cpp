@@ -1,5 +1,4 @@
 #include "hsc_pressure.h"
-//#include <bcm2835.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <pigpio.h>
@@ -35,7 +34,6 @@ float hsc_pressure::getPressure(void)
 	{
 		tics = (vals[0] & 0x3F) * 256;
 		tics += vals[1];
-	//	ret = (((float)tics / (float)MAX_COUNTS) - 0.1f)*((maxPress - minPress) / 0.8f) + minPress;
 	
 		ret = ((((float)tics - MIN_OUTPUT)*(maxPress - minPress)) /
 			(MAX_OUTPUT - MIN_OUTPUT)) + minPress; 	

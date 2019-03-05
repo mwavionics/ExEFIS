@@ -2,7 +2,7 @@
 class airspeed
 {
 public:
-	static float getAirspeedMph(float pressurePsi, float tempC, float staticPressPSI);
+	static float getIASMph (float pressurePsi);
 	
 };
 

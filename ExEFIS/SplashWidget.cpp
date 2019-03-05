@@ -25,15 +25,15 @@ SplashWidget::SplashWidget(QWidget *parent)
 SplashWidget::SplashWidget(QWidget *parent, 
 	adhrs *ad, 
 	knobs *k)
-	:QWidget(parent)
+	:SplashWidget(parent)
 {
 	adhr = ad;
 	knob = k;
-	k->left->getPress(true);
+	k->right->getPress(true);
 	
-	timer = new QTimer(this);
+//	timer = new QTimer(this);
 	
-	connect(timer, SIGNAL(timeout()), this, SLOT(onTimerExp()));	
+//	connect(timer, SIGNAL(timeout()), this, SLOT(onTimerExp()));	
 }
 
 
@@ -54,7 +54,7 @@ void SplashWidget::onTimerExp(void)
 	timer->stop();
 	
 	
-	if (knob->left->getPress(true) >= 3) launchDebug = true;
+	if (knob->right->getPress(true) >= 3) launchDebug = true;
 	if (launchDebug)
 	{
 		QMessageBox msgBox;
@@ -62,7 +62,7 @@ void SplashWidget::onTimerExp(void)
 		msgBox.setWindowTitle("");
 		msgBox.exec();
 		this->close();
-		launchPanel(2);
+		//launchPanel(2);
 	}	
 	else
 	{
@@ -77,6 +77,6 @@ void SplashWidget::onTimerExp(void)
 
 void SplashWidget::showEvent(QShowEvent *event)
 {
-	timer->start(3000);
+	//timer->start(3000);
 	update();
 }

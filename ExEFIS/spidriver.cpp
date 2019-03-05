@@ -48,7 +48,6 @@ void spidriver::init(void)
 
 int spidriver::transferdata(unsigned char* data, int length)
 {
-	//return(read(fd, data, length));
 	char tx[4];
 	spi_ioc_transfer tr;
 	
