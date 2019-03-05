@@ -2,7 +2,7 @@
 
 #include <QWidget>
 #include <QTimer>
-#include <QPen.h>
+#include <QPen>
 
 class round_instrument : public QWidget
 {
