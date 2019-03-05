@@ -51,7 +51,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <math.h>
-#include "matrix.h"
+#include "Matrix.h"
 
 namespace imu
 {

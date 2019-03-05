@@ -1,7 +1,7 @@
 #pragma once
-#include <QWidget.h>
+#include <QWidget>
 #include <QTimer>
-#include <QPen.h>
+#include <QPen>
 #include <QPainter>
 
 class directional_gyro :public QWidget

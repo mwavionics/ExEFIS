@@ -1,8 +1,8 @@
 #pragma once
 
 #include "horizon_instrument.h"
-#include <QWidget.h>
-#include <QPen.h>
+#include <QWidget>
+#include <QPen>
 #include <QMutex>
 
 class horizon_instrument :public QWidget
