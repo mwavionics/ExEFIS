@@ -97,7 +97,7 @@ static float   magCalibration[3];
 // entered here or can be calculated each time the device is powered on.
 static float gyroBias[3], accelBias[3] = { 0, 0, 0 }, 
 	magBias[3] = { 36.899, 205.580, -365.1833 }, magScale[3] = { 1, 1, 1 },
-    axisremap[3] = { 2.0, 1.0, 0.0 }; 
+    axisremap[12] = { 2.0, 1.0, 0.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0 }; 
 
 //static float gyroBias[3] = {, accelBias[3], magBias[3] = { 0, 0, 0 }, magScale[3] = { 1, 1, 1 }; 
 
@@ -125,11 +125,11 @@ mpudriver::mpudriver()
 mpudriver::mpudriver(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale, float* ppAxisRemap)
 	: mpudriver()
 {	
-	pGyroBias = ppGyroBias; 
-	pAccelBias = ppAccelBias; 
-	pMagBias = ppMagBias; 
-	pMagScale = ppMagScale;
-	pAxisRemap = ppAxisRemap;
+	pGyroBias = (ppGyroBias != NULL) ? ppGyroBias : gyroBias; 
+	pAccelBias = (ppAccelBias != NULL) ? ppAccelBias : accelBias; 
+	pMagBias = (ppMagBias != NULL) ? ppMagBias : magBias; 
+	pMagScale = (ppMagScale != NULL) ? ppMagScale : magScale;
+	pAxisRemap = (ppAxisRemap != NULL) ? ppAxisRemap : axisremap;
 }
 
 int mpudriver::Init(bool doSelfTest, bool doCalibration, bool doMagCalibration)
