@@ -67,10 +67,16 @@ adhrs::adhrs()
 	axisremap[11] = 1.0;    //zaxis mag for EFIS is not inverted
 	
 	//Initialize the caldata to all invalid values
-	for (int i = 0; i < 15; i++)
+	for (int i = 0; i < 24; i++)
 	{
 		caldata[i] = 10000.0f;
 	}	
+	
+	float* pGyroBias = NULL;
+	float* pAccelBias = NULL;
+	float* pMagBias = NULL;
+	float* pMagScale = NULL; 
+	float* pAxisRemap = NULL;
 	
 	/* Search the /home/pi directory for a sensor cal file
 	 * This has been udpated to allow sensorcal_serialnumber.txt files
@@ -102,11 +108,11 @@ adhrs::adhrs()
 					calfile_process_line(line, caldata);
 				}
 				/* do we calibrate?*/
-				cal = calfile_validate(caldata);
+				cal = calfile_validate(caldata, pGyroBias, pAccelBias, pMagBias, pMagScale, pAxisRemap);
 				if (cal) 
 				{
 					qDebug() << "found valid caldata" << calfile->fileName();
-					mpudriver *hrs = new mpudriver(&caldata[0], &caldata[3], &caldata[6], &caldata[9], &caldata[12]);				
+					mpudriver *hrs = new mpudriver(pGyroBias, pAccelBias, pMagBias, pMagScale, pAxisRemap);				
 					int s = hrs->Init(true, false, false);
 				}				
 			}			
@@ -329,31 +335,66 @@ void adhrs::calfile_process_line(QByteArray &line, float* data)
 }
 
 
-bool adhrs::calfile_validate(float* data)
+bool adhrs::calfile_validate(float* data,
+	float* pGyroBias,
+	float* pAccelBias,
+	float* pMagBias,
+	float* pMagScale, 
+	float* pAxisRemap)
 {
-	bool valid = true;
+	bool gyrovalid = true;
 	//Gyro
-	if (data[0] > GYRO_POS_VALID || data[0] < GYRO_NEG_VALID) valid = false;
-	if (data[1] > GYRO_POS_VALID || data[1] < GYRO_NEG_VALID) valid = false;
-	if (data[2] > GYRO_POS_VALID || data[2] < GYRO_NEG_VALID) valid = false;
+	if(data[0] > GYRO_POS_VALID || data[0] < GYRO_NEG_VALID) gyrovalid = false;
+	if (data[1] > GYRO_POS_VALID || data[1] < GYRO_NEG_VALID) gyrovalid = false;
+	if (data[2] > GYRO_POS_VALID || data[2] < GYRO_NEG_VALID) gyrovalid = false;
+	if (!gyrovalid)qDebug() << "gyro data not valid";
+	pGyroBias = gyrovalid ? &data[0] : NULL;
 	
-	//Accel	
-	if (data[3] > ACCEL_POS_VALID || data[3] < ACCEL_NEG_VALID) valid = false;
-	if (data[4] > ACCEL_POS_VALID || data[4] < ACCEL_NEG_VALID) valid = false;
-	if (data[5] > ACCEL_POS_VALID || data[5] < ACCEL_NEG_VALID) valid = false;
+	//Accel
+	bool accelvalid = true;
+	if (data[3] > ACCEL_POS_VALID || data[3] < ACCEL_NEG_VALID) accelvalid = false;
+	if (data[4] > ACCEL_POS_VALID || data[4] < ACCEL_NEG_VALID) accelvalid = false;
+	if (data[5] > ACCEL_POS_VALID || data[5] < ACCEL_NEG_VALID) accelvalid = false;
+	if (!accelvalid)qDebug() << "accel data not valid";
+	pAccelBias = accelvalid ? &data[3] : NULL;
 	
 	//Mag Offset
-	if (data[6] > MAGBIAS_POS_VALID || data[6] < MAGBIAS_NEG_VALID) valid = false;
-	if (data[7] > MAGBIAS_POS_VALID || data[7] < MAGBIAS_NEG_VALID) valid = false;
-	if (data[8] > MAGBIAS_POS_VALID || data[8] < MAGBIAS_NEG_VALID) valid = false;
+	bool magvalid = true;
+	if (data[6] > MAGBIAS_POS_VALID || data[6] < MAGBIAS_NEG_VALID) magvalid = false;
+	if (data[7] > MAGBIAS_POS_VALID || data[7] < MAGBIAS_NEG_VALID) magvalid = false;
+	if (data[8] > MAGBIAS_POS_VALID || data[8] < MAGBIAS_NEG_VALID) magvalid = false;
+	if (!magvalid)qDebug() << "mag bias not valid";
+	pMagBias = magvalid ? &data[6] : NULL;
 	
 	//Mag Scale
-	if (data[9] > MAGSCALE_POS_VALID || data[9] < MAGSCALE_NEG_VALID) valid = false;
-	if (data[10] > MAGSCALE_POS_VALID || data[10] < MAGSCALE_NEG_VALID) valid = false;
-	if (data[11] > MAGSCALE_POS_VALID || data[11] < MAGSCALE_NEG_VALID) valid = false;
+	bool msvalid = true;
+	if (data[9] > MAGSCALE_POS_VALID || data[9] < MAGSCALE_NEG_VALID) msvalid = false;
+	if (data[10] > MAGSCALE_POS_VALID || data[10] < MAGSCALE_NEG_VALID) msvalid = false;
+	if (data[11] > MAGSCALE_POS_VALID || data[11] < MAGSCALE_NEG_VALID) msvalid = false;
+	if (!msvalid)qDebug() << "mag scale not valid";
+	pMagScale = msvalid ? &data[9] : NULL;
 	
-	return (true);
+	//axis Remap
+	bool amvalid;
+	if (data[12] > AXISREMAP_POS_VALID || data[12] < AXISREMAP_NEG_VALID) amvalid = false;
+	if (data[13] > AXISREMAP_POS_VALID || data[13] < AXISREMAP_NEG_VALID) amvalid = false;
+	if (data[14] > AXISREMAP_POS_VALID || data[14] < AXISREMAP_NEG_VALID) amvalid = false;
+	if (data[15] > AXISREMAP_POS_VALID || data[15] < AXISREMAP_NEG_VALID) amvalid = false;
+	if (data[16] > AXISREMAP_POS_VALID || data[16] < AXISREMAP_NEG_VALID) amvalid = false;
+	if (data[17] > AXISREMAP_POS_VALID || data[17] < AXISREMAP_NEG_VALID) amvalid = false;
+	if (data[18] > AXISREMAP_POS_VALID || data[18] < AXISREMAP_NEG_VALID) amvalid = false;
+	if (data[19] > AXISREMAP_POS_VALID || data[19] < AXISREMAP_NEG_VALID) amvalid = false;
+	if (data[20] > AXISREMAP_POS_VALID || data[20] < AXISREMAP_NEG_VALID) amvalid = false;
+	if (data[21] > AXISREMAP_POS_VALID || data[21] < AXISREMAP_NEG_VALID) amvalid = false;
+	if (data[22] > AXISREMAP_POS_VALID || data[22] < AXISREMAP_NEG_VALID) amvalid = false;
+	if (data[23] > AXISREMAP_POS_VALID || data[23] < AXISREMAP_NEG_VALID) amvalid = false;
+	if (!amvalid) qDebug() << "axis remap not valid";
+	pAxisRemap = amvalid ? &data[12] : NULL;
+	
+	return (gyrovalid || accelvalid || magvalid || msvalid || amvalid);
 }
+
+
 
 
 

@@ -35,7 +35,7 @@ void horizon_instrument::paintEvent(QPaintEvent *event)
 
 	/* Set the top half of the horizon */	
 	QRect top = QRect(-1.5*width() / 2, -2*height() / 2, 1.5*width(), 2*height() / 2);
-	QColor topcolor = QColor::fromRgb(125, 206, 250, 255);  //Sky Blue		
+	QColor topcolor = QColor::fromRgb(125, 206, 250, 255);  //Sky Blue		 
 	
 	/* Set the bottom half of the horizon */
 	QRect bot = QRect(-1.5*width() / 2, 0, 1.5*width(), 2*height() / 2);
