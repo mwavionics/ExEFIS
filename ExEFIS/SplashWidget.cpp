@@ -55,7 +55,7 @@ void SplashWidget::onTimerExp(void)
 	
 	
 	if (knob->right->getPress(true) >= 3) launchDebug = true;
-	if (launchDebug)
+	if (false)//launchDebug)
 	{
 		QMessageBox msgBox;
 		msgBox.setText("Launching Diagnostics...");
