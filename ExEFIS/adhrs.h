@@ -5,16 +5,16 @@
 #include "mpudriver.h"
 
 //Defines for validity checks on the calibraitons
-#define GYRO_POS_VALID 1.0f
-#define GYRO_NEG_VALID -1.0f
-#define ACCEL_POS_VALID 0.1f
-#define ACCEL_NEG_VALID -0.1f
+#define GYRO_POS_VALID 100.0f
+#define GYRO_NEG_VALID -100.0f
+#define ACCEL_POS_VALID 1.0f
+#define ACCEL_NEG_VALID -1.0f
 #define MAGBIAS_POS_VALID 500.0f
 #define MAGBIAS_NEG_VALID -500.0f
-#define MAGSCALE_POS_VALID 1.2f
-#define MAGSCALE_NEG_VALID -1.2f
+#define MAGSCALE_POS_VALID 1.5f
+#define MAGSCALE_NEG_VALID -1.5f
 #define AXISREMAP_POS_VALID 3.0f
-#define AXISREMAP_NEG_VALID -1.0f
+#define AXISREMAP_NEG_VALID -2.0f
 
 typedef struct
 {
@@ -29,7 +29,7 @@ typedef struct
 class adhrs
 {
 public:
-	adhrs();
+	adhrs(bool domagtest, bool showmagvectors);
 	~adhrs();
 
 	int getDataSet(AHRS_DATA* data);	
@@ -46,8 +46,9 @@ private:
 	mpudriver *hrs;
 	
 	void calfile_process_line(QByteArray &line, float* data);
-	bool calfile_validate(float* data, float* pGyroBias, float* pAccelBias, float* pMagBias,
-		float* pMagScale, float* pAxisRemap);
+	bool calfile_validate(float* data, volatile float* pGyroBias, volatile float* pAccelBias, 
+		volatile float* pMagBias,
+		volatile float* pMagScale, volatile float* pAxisRemap);
 	
 	
 };

@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <iostream>
 #include <pigpio.h>
+#include <unistd.h>
 
 #include "SplashWidget.h"
 #include "panelWidget.h"
@@ -36,11 +37,41 @@ int main(int argc, char *argv[])
 	QScreen *screen = QGuiApplication::primaryScreen();
 	QRect  screenGeometry = screen->geometry();
 	
+	qDebug("numoptions is %d", argc);
+	for (int i = 0; i < argc; i++)
+	{
+		qDebug() << argv[i];
+	}
+	
+	int opt;
+	bool domagcal = false;
+	bool showmagvector = false;
+	while ((opt = getopt(argc, argv, "hmgac:")) != -1)  
+	{  
+		switch (opt)  
+		{  
+		case 'm': 
+			domagcal = true;
+			qDebug("Option m passed - will do magcal test");
+			break;	
+		case 'g': 
+			showmagvector = true;
+			qDebug("Option g passed - will show mag vectors");
+			break;	
+		case 'h':
+			qDebug() << "-m for magnetometer calibration";
+			qDebug() << "-g for magnetometer vector verification";
+			qDebug() << "-a ... undefined";
+			qDebug() << "-c ... undefined";
+				
+		}  
+	}  
+	
 	/* Now that we're using pigpio, initialize the library */
 	if (gpioInitialise() < 0) qDebug("ERROR: Can't initialize");
 	
 	knobs *k = new knobs();	
-	adhrs *ad = new adhrs();	
+	adhrs *ad = new adhrs(domagcal, showmagvector);	
 	
 	QStackedWidget *w = new QStackedWidget();
 	

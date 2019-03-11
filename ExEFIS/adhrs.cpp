@@ -24,7 +24,7 @@
 * @author
 * @li SSK - 11/06/17 - Created & Commented
 **************************************************************************************************/
-adhrs::adhrs()
+adhrs::adhrs(bool domagtest, bool showmagvectors)
 {	
 	staticpress = new hsc_pressure();
 	staticpress->set_params(15, 0);
@@ -72,11 +72,11 @@ adhrs::adhrs()
 		caldata[i] = 10000.0f;
 	}	
 	
-	float* pGyroBias = NULL;
-	float* pAccelBias = NULL;
-	float* pMagBias = NULL;
-	float* pMagScale = NULL; 
-	float* pAxisRemap = NULL;
+	static float* pGyroBias = NULL;
+	static float* pAccelBias = NULL;
+	static float* pMagBias = NULL;
+	static float* pMagScale = NULL; 
+	static float* pAxisRemap = NULL;
 	
 	/* Search the /home/pi directory for a sensor cal file
 	 * This has been udpated to allow sensorcal_serialnumber.txt files
@@ -112,8 +112,9 @@ adhrs::adhrs()
 				if (cal) 
 				{
 					qDebug() << "found valid caldata" << calfile->fileName();
-					mpudriver *hrs = new mpudriver(pGyroBias, pAccelBias, pMagBias, pMagScale, pAxisRemap);				
-					int s = hrs->Init(true, false, false);
+					//mpudriver *hrs = new mpudriver(pGyroBias, pAccelBias, pMagBias, pMagScale, pAxisRemap);				
+					mpudriver *hrs = new mpudriver(&caldata[0], &caldata[3], &caldata[6], &caldata[9], &caldata[12]);
+					int s = hrs->Init(true, false, domagtest, showmagvectors);
 				}				
 			}			
 		}		
@@ -122,7 +123,7 @@ adhrs::adhrs()
 	{			
 		qDebug() << "using zero'd caldata, no file found" ;
 		mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale, axisremap);				
-		int s = hrs->Init(true, false, false);		
+		int s = hrs->Init(true, false, domagtest, showmagvectors);		
 	}
 }
 
@@ -336,11 +337,11 @@ void adhrs::calfile_process_line(QByteArray &line, float* data)
 
 
 bool adhrs::calfile_validate(float* data,
-	float* pGyroBias,
-	float* pAccelBias,
-	float* pMagBias,
-	float* pMagScale, 
-	float* pAxisRemap)
+	volatile float* pGyroBias,
+	volatile float* pAccelBias,
+	volatile float* pMagBias,
+	volatile float* pMagScale, 
+	volatile float* pAxisRemap)
 {
 	bool gyrovalid = true;
 	//Gyro
@@ -375,7 +376,7 @@ bool adhrs::calfile_validate(float* data,
 	pMagScale = msvalid ? &data[9] : NULL;
 	
 	//axis Remap
-	bool amvalid;
+	bool amvalid = true;
 	if (data[12] > AXISREMAP_POS_VALID || data[12] < AXISREMAP_NEG_VALID) amvalid = false;
 	if (data[13] > AXISREMAP_POS_VALID || data[13] < AXISREMAP_NEG_VALID) amvalid = false;
 	if (data[14] > AXISREMAP_POS_VALID || data[14] < AXISREMAP_NEG_VALID) amvalid = false;

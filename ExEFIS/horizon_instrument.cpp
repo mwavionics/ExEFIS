@@ -34,11 +34,11 @@ void horizon_instrument::paintEvent(QPaintEvent *event)
 	painter.rotate(_angle);
 
 	/* Set the top half of the horizon */	
-	QRect top = QRect(-1.5*width() / 2, -2*height() / 2, 1.5*width(), 2*height() / 2);
+	QRect top = QRect(-3*width() / 2, -4*height() / 2, 3*width(), 4*height() / 2);
 	QColor topcolor = QColor::fromRgb(125, 206, 250, 255);  //Sky Blue		 
 	
 	/* Set the bottom half of the horizon */
-	QRect bot = QRect(-1.5*width() / 2, 0, 1.5*width(), 2*height() / 2);
+	QRect bot = QRect(-3*width() / 2, 0, 3*width(), 4*height() / 2);
 	QColor botcolor = QColor::fromRgb(114, 59, 34, 255);  	//Earth Browm
 	
 	QPoint center = QPoint(width() / 2, height() / 2);

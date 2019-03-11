@@ -70,6 +70,8 @@ static const uint8_t intPin = 27;//0;  //GPIO 17;     //  MPU9250 interrupt
 // Interrupt support 
 static bool runFilter; 
 
+static bool showmagvectors;
+
 int sensorID;
 static float* pGyroBias; 
 static float* pAccelBias; 
@@ -132,9 +134,11 @@ mpudriver::mpudriver(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, fl
 	pAxisRemap = (ppAxisRemap != NULL) ? ppAxisRemap : axisremap;
 }
 
-int mpudriver::Init(bool doSelfTest, bool doCalibration, bool doMagCalibration)
+int mpudriver::Init(bool doSelfTest, bool doCalibration, bool doMagCalibration, bool _showmagvectors)
 {
 	int status = 0;	
+	
+	showmagvectors = _showmagvectors;
 	
 	mpu->begin();
 	mag->begin();
@@ -407,6 +411,7 @@ void mpudriver::RunFilter(void)
 			// Calculate the magnetometer values in milliGauss
 			// Include factory calibration per data sheet and user environmental corrections
 			// Get actual magnetometer value, this depends on scale being set
+			//SSK note the out of order here, this moves the mag axes in line with the gyro and accel axes
 			mx = (float)magCount[0]*mRes*magCalibration[0] - pMagBias[0];  
 			my = (float)magCount[1]*mRes*magCalibration[1] - pMagBias[1];  
 			mz = (float)magCount[2]*mRes*magCalibration[2] - pMagBias[2];  
@@ -498,25 +503,42 @@ void mpudriver::RunFilter(void)
 
 			usec = 0;
 			
-			float qw, qx, qy, qz;
+			if (!showmagvectors)
+			{			
 			
-			euler = filter.getEuler();
-			printf("Orientation:, %f, %f, %f, Accelerometer:, %d, %d, %d, Gyro: , %+2.2f, %+2.2f, %+2.2f, Mag:, %+3.3f, %+3.3f, %+3.3f, Quad: %d \n", 
-				euler.x() * 180.0f / M_PI,
-				euler.y() * 180.0f / M_PI,
-				euler.z() * 180.0f / M_PI, 
-				(int)(1000*ax),
-				(int)(1000*ay),
-				(int)(1000*az),
-				gx,
-				gy,
-				gz,
-				mx, //this is yaw2
-				my,
-				mz, //this is yaw1
-				filter.quad);
-//			printf("Wings Level, %d \n", filter.wingslevel);
-//			printf("DMAG[2] = , %+2.4f \n", filter.dmag[2]);
+				float qw, qx, qy, qz;
+			
+				euler = filter.getEuler();
+				printf("Orientation:, %f, %f, %f, Accelerometer:, %d, %d, %d, Gyro: , %+2.2f, %+2.2f, %+2.2f, Mag:, %+3.3f, %+3.3f, %+3.3f, Quad: %d \n", 
+					euler.x() * 180.0f / M_PI,
+					euler.y() * 180.0f / M_PI,
+					euler.z() * 180.0f / M_PI, 
+					(int)(1000*ax),
+					(int)(1000*ay),
+					(int)(1000*az),
+					gx,
+					gy,
+					gz,
+					mx,
+					//this is yaw2
+				   my,
+					mz,
+					//this is yaw1
+				   filter.quad);
+				//			printf("Wings Level, %d \n", filter.wingslevel);
+				//			printf("DMAG[2] = , %+2.4f \n", filter.dmag[2]);
+			}
+			else
+			{
+				float mag_norm = sqrt((mx*mx) + (my*my) + (mz*mz));
+				float xmag = mx / mag_norm;
+				float ymag = my / mag_norm;
+				float zmag = mz / mag_norm;
+				printf("MagVectors:, totalmag, %+2.3f, Yaw zx %+2.3f \n",
+					mag_norm,
+					(-atan2((-zmag), (xmag))* (180.0f / M_PI))					
+					);
+			}
 
 		}
 	}

@@ -283,11 +283,11 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				_magEuler[0] = constrainAngle180(rollmag - M_PI);   //need to offset this by pi
 			//	Roll = _magEuler[0];
 				
-				float pitchmag = -atan2((-xmag ), (zmag)); 
+				float pitchmag = -atan2((-xmag ), (ymag)); 
 				_magEuler[1] = constrainAngle180(pitchmag - M_PI);   //need to offset this by pi
 			//	Pitch = _magEuler[1];
 				
-				float yawmag = -atan2((-ymag), (xmag)); 
+				float yawmag = -atan2((-zmag), (xmag)); 
 				_magEuler[2] = constrainAngle360(yawmag);
 								
 				dmagbuffer[0][magbufferindex] = (_magEuler[0] - magPrev[0]) / _dt ;
@@ -413,7 +413,7 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			float fg[3] = { 1.0f, 1.0f, 1.0f };
 			float fm[3] = { 0.0f, 0.0f, 0.0f };
 			float fa[3] = { 0.0f, 0.0f, 0.0f };
-			
+
 			if (pitchlevel)
 			{
 				fg[1] = 0.0f;
@@ -439,6 +439,7 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				fg[2] = 0.0f;
 				fm[2] = 1.0f;
 			}
+
 			
 			//Don't need the "spring" with the fixed Euler with the current setup
 		

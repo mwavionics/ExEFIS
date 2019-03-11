@@ -33,7 +33,7 @@ public:
 	mpudriver();
 	mpudriver(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale, float* ppAxisRemap);
 	~mpudriver();
-	int Init(bool doSelfTest, bool doCalibration, bool doMagCalibration);
+	int Init(bool doSelfTest, bool doCalibration, bool doMagCalibration, bool _showmagvectors);
 	int GetAccelStatus(void);
 	int GetMagStatus(void);
 	int GetGyrStatus(void);
@@ -73,6 +73,7 @@ public:
 private:
 	PiI2C *mpu;
 	PiI2C *mag;
+	
 	
 
 	
