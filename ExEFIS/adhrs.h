@@ -1,8 +1,10 @@
 #pragma once
-#include "hsc_pressure.h"
 #include <QByteArray>
 #include <QTimer>
+#include <QFile>
+
 #include "mpudriver.h"
+#include "hsc_pressure.h"
 
 //Defines for validity checks on the calibraitons
 #define GYRO_POS_VALID 100.0f
@@ -15,40 +17,74 @@
 #define MAGSCALE_NEG_VALID -1.5f
 #define AXISREMAP_POS_VALID 3.0f
 #define AXISREMAP_NEG_VALID -2.0f
+#define PRESSURE_MAX_VALID 30.0f
+#define PRESSURE_MIN_VALID -30.0f
 
 typedef struct
 {
-	float staticPressurePSI;
-	float aspPressurePSI;
+	float altitude;
+	float airspeed;
 	float heading;
 	float roll;
 	float pitch;
 	float slip;
 }AHRS_DATA;
 
+typedef struct
+{
+	float gyroBias[3];
+	bool gyroValid;
+	
+	float accelBias[3];
+	bool accelValid;
+	
+	float magBias[3];
+	bool magBiasValid;
+	
+	float magScale[3];
+	bool magScaleValid;
+	
+	float axisremap[12];
+	bool axisRemapValid;
+	
+	float staticPressMax;
+	float staticPressMin;
+	bool staticPressValid;
+	
+	float airspeedPressMax;
+	float airspeedPressMin;
+	bool airspeedPressValid;
+}AHRS_CAL;
+
 class adhrs
 {
 public:
-	adhrs(bool domagtest, bool showmagvectors);
+	adhrs(AHRS_CAL* pCalibration, bool domagtest, bool showmagvectors);
 	~adhrs();
+	
+	void Init(void);
 
-	int getDataSet(AHRS_DATA* data);	
-	int getOffsets(char* calData);
-	int setOffsets(char* calData);
-	void getCalibration(char* cal);
-	bool getWingsLevel(void);
+	int getDataSet(AHRS_DATA* data);
+	void getCalibration(AHRS_CAL* cal);
+	bool getWingsLevel(void);	
+	void setAltimeterSetting(int setting, int settingPrec);
+		
+	static AHRS_CAL* processCalibrationFile(QFile* file);
+
 	
 	
 private:
-	float caldata[24];
 	hsc_pressure *staticpress;
 	hsc_pressure *airspeed;
 	mpudriver *hrs;
+	AHRS_CAL* pCal;
+	float altimeterSetting;
+	bool performMagTest = false;
+	bool showMagVectors = false;
 	
-	void calfile_process_line(QByteArray &line, float* data);
-	bool calfile_validate(float* data, volatile float* pGyroBias, volatile float* pAccelBias, 
-		volatile float* pMagBias,
-		volatile float* pMagScale, volatile float* pAxisRemap);
+	static void default_calibration(AHRS_CAL* cal);
+	static void calfile_process_line(QByteArray &line);
+	static bool calfile_validate( void );
 	
 	
 };

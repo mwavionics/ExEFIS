@@ -3,9 +3,12 @@
 #include <QVBoxLayout>
 #include <QProcess>
 #include <QWidget>
+#include <QString>
 #include <QScreen>
 #include <QThread>
 #include <QDebug>
+#include <QDir>
+#include <QFile>
 #include <iostream>
 #include <pigpio.h>
 #include <unistd.h>
@@ -70,12 +73,60 @@ int main(int argc, char *argv[])
 	/* Now that we're using pigpio, initialize the library */
 	if (gpioInitialise() < 0) qDebug("ERROR: Can't initialize");
 	
+	
+	/* Search the /home/pi directory for a sensor cal file
+	 * This has been udpated to allow sensorcal_serialnumber.txt files
+	 * This way MW Avionics can keep sensorcal files as backups for each SN*/
+	bool cal = false;
+	AHRS_CAL* pCal = NULL;
+	QFile* calfile;
+	QDir directory("/home/pi");
+	qDebug() << "Searching " << directory.path() << " for calibration file";
+	QFileInfoList files = directory.entryInfoList(QStringList() << "*.txt" << "*.TXT", QDir::Files);
+	QString filename = NULL;
+	int num = files.count();
+	for (int i = 0; i < num; i++)
+	{
+		QString fn = files.at(i).fileName();		
+		if (fn.contains("sensorcal", Qt::CaseInsensitive))
+		{
+			filename = files.at(i).filePath();			
+		}
+	}
+	if (filename != NULL)
+	{
+		calfile = new QFile(filename);		
+	}
+	
+	QFile* settingsFile;	
+	qDebug() << "Searching " << directory.path() << " for settings file";
+	files = directory.entryInfoList(QStringList() << "*.txt" << "*.TXT", QDir::Files);	
+	num = files.count();
+	QString fname = NULL;
+	for (int i = 0; i < num; i++)
+	{
+		QString fn = files.at(i).fileName();		
+		if (fn.contains("settings", Qt::CaseInsensitive))
+		{
+			fname = files.at(i).filePath();			
+		}
+	}
+	if (fname != NULL)
+	{
+		settingsFile = new QFile(fname);		
+	}
+	else
+	{
+		settingsFile = new QFile("/home/pi/settingsfile.txt");		
+	}
+	
 	knobs *k = new knobs();	
-	adhrs *ad = new adhrs(domagcal, showmagvector);	
+	pCal = adhrs::processCalibrationFile(calfile);
+	adhrs *ad = new adhrs(pCal, domagcal, showmagvector);	
 	
 	QStackedWidget *w = new QStackedWidget();
 	
-	panelWidget *p = new panelWidget();
+	panelWidget *p = new panelWidget(settingsFile);
 	p->setADHRS(ad);
 	p->setKNOBS(k);
 	//p->showFullScreen();

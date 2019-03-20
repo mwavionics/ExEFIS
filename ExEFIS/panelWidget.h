@@ -12,15 +12,27 @@
 #include "adhrs.h"
 #include "knobs.h"
 
+typedef struct
+{
+	int skyColor[4];
+	int earthColor[4];
+	int encoderConfig;
+	int horizonOffset;
+	int AltimeterSetting;
+	int SteerCard[12];
+}PANEL_SETTINGS;
+
 class panelWidget : public QWidget
 {
 	Q_OBJECT
 	
 public:
 	panelWidget(QWidget *parent = 0);
+	panelWidget(QFile* f);
 	~panelWidget();
 	void setADHRS(adhrs* a);
 	void setKNOBS(knobs* k);
+	void setSettingsFile(QFile* file);
 	
 public slots :
 	void onTimer(void);
@@ -46,5 +58,14 @@ private:
 	MenuWidget *mw;
 	adhrs *adhr;
 	knobs *knob;
+	QFile* settingsFile;
+	PANEL_SETTINGS settings;
+	
+	
+	
+	bool loadSettingsFile();
+	void settingsFile_ProcessLine(QByteArray line);	
+	bool saveSettingsFile();
+	bool defaultSettings();
 };
 

@@ -392,7 +392,6 @@ Debug/moc_panelWidget.cpp: horizon_instrument.h \
 		StatusWidget.h \
 		MenuWidget.h \
 		adhrs.h \
-		hsc_pressure.h \
 		mpudriver.h \
 		Quaternion.h \
 		Matrix.h \
@@ -400,6 +399,7 @@ Debug/moc_panelWidget.cpp: horizon_instrument.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h \
 		panelWidget.h \
@@ -415,7 +415,6 @@ Debug/moc_round_instrument.cpp: round_instrument.h \
 	'c:\SysGCC\raspberry\Qt\v5\moc.exe' $(DEFINES) -Ic:/SysGCC/raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf/qt5/mkspecs/arm-linux-gnueabihf -IC:/Users/skreikemeier/source/repos/ExEFIS/ExEFIS -IC:/Users/skreikemeier/source/repos/ExEFIS/ExEFIS -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/sysroot/usr/include/arm-linux-gnueabihf/qt5 -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/sysroot/usr/include/arm-linux-gnueabihf/qt5/QtWidgets -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/sysroot/usr/include/arm-linux-gnueabihf/qt5/QtGui -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/sysroot/usr/include/arm-linux-gnueabihf/qt5/QtCore -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/include/c++/6 -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/include/c++/6/backward -Ic:/sysgcc/raspberry/lib/gcc/arm-linux-gnueabihf/6/include -Ic:/sysgcc/raspberry/lib/gcc/arm-linux-gnueabihf/6/include-fixed -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/include -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/include/arm-linux-gnueabihf/c++/6 -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/sysroot/usr/include/arm-linux-gnueabihf -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/sysroot/usr/include round_instrument.h -o Debug/moc_round_instrument.cpp
 
 Debug/moc_SplashWidget.cpp: adhrs.h \
-		hsc_pressure.h \
 		mpudriver.h \
 		Quaternion.h \
 		Matrix.h \
@@ -423,6 +422,7 @@ Debug/moc_SplashWidget.cpp: adhrs.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h \
 		SplashWidget.h \
@@ -434,7 +434,6 @@ Debug/moc_vertical_instrument.cpp: vertical_instrument.h \
 	'c:\SysGCC\raspberry\Qt\v5\moc.exe' $(DEFINES) -Ic:/SysGCC/raspberry/arm-linux-gnueabihf/sysroot/usr/lib/arm-linux-gnueabihf/qt5/mkspecs/arm-linux-gnueabihf -IC:/Users/skreikemeier/source/repos/ExEFIS/ExEFIS -IC:/Users/skreikemeier/source/repos/ExEFIS/ExEFIS -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/sysroot/usr/include/arm-linux-gnueabihf/qt5 -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/sysroot/usr/include/arm-linux-gnueabihf/qt5/QtWidgets -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/sysroot/usr/include/arm-linux-gnueabihf/qt5/QtGui -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/sysroot/usr/include/arm-linux-gnueabihf/qt5/QtCore -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/include/c++/6 -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/include/c++/6/backward -Ic:/sysgcc/raspberry/lib/gcc/arm-linux-gnueabihf/6/include -Ic:/sysgcc/raspberry/lib/gcc/arm-linux-gnueabihf/6/include-fixed -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/include -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/include/arm-linux-gnueabihf/c++/6 -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/sysroot/usr/include/arm-linux-gnueabihf -Ic:/sysgcc/raspberry/arm-linux-gnueabihf/sysroot/usr/include vertical_instrument.h -o Debug/moc_vertical_instrument.cpp
 
 Debug/moc_DiagWidget.cpp: adhrs.h \
-		hsc_pressure.h \
 		mpudriver.h \
 		Quaternion.h \
 		Matrix.h \
@@ -442,6 +441,7 @@ Debug/moc_DiagWidget.cpp: adhrs.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h \
 		DiagWidget.h \
@@ -463,14 +463,16 @@ compiler_clean: compiler_rcc_clean compiler_moc_header_clean
 ####### Compile
 
 Debug/adhrs.o: adhrs.cpp adhrs.h \
-		hsc_pressure.h \
 		mpudriver.h \
 		Quaternion.h \
 		Matrix.h \
 		Vector.h \
 		PiTransfer.h \
 		ByteTransfer.h \
-		MPU9250.h
+		MPU9250.h \
+		hsc_pressure.h \
+		airspeed.h \
+		altitude.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Debug/adhrs.o adhrs.cpp
 
 Debug/airspeed.o: airspeed.cpp 
@@ -487,7 +489,6 @@ Debug/directional_gyro.o: directional_gyro.cpp directional_gyro.h
 
 Debug/ExEFIS.o: ExEFIS.cpp SplashWidget.h \
 		adhrs.h \
-		hsc_pressure.h \
 		mpudriver.h \
 		Quaternion.h \
 		Matrix.h \
@@ -495,6 +496,7 @@ Debug/ExEFIS.o: ExEFIS.cpp SplashWidget.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h \
 		panelWidget.h \
@@ -532,7 +534,6 @@ Debug/knobs.o: knobs.cpp knobs.h \
 
 Debug/DiagWidget.o: DiagWidget.cpp DiagWidget.h \
 		adhrs.h \
-		hsc_pressure.h \
 		mpudriver.h \
 		Quaternion.h \
 		Matrix.h \
@@ -540,6 +541,7 @@ Debug/DiagWidget.o: DiagWidget.cpp DiagWidget.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Debug/DiagWidget.o DiagWidget.cpp
@@ -561,7 +563,6 @@ Debug/panelWidget.o: panelWidget.cpp panelWidget.h \
 		StatusWidget.h \
 		MenuWidget.h \
 		adhrs.h \
-		hsc_pressure.h \
 		mpudriver.h \
 		Quaternion.h \
 		Matrix.h \
@@ -569,6 +570,7 @@ Debug/panelWidget.o: panelWidget.cpp panelWidget.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h \
 		airspeed.h \
@@ -596,7 +598,6 @@ Debug/spidriver.o: spidriver.cpp spidriver.h
 
 Debug/SplashWidget.o: SplashWidget.cpp SplashWidget.h \
 		adhrs.h \
-		hsc_pressure.h \
 		mpudriver.h \
 		Quaternion.h \
 		Matrix.h \
@@ -604,6 +605,7 @@ Debug/SplashWidget.o: SplashWidget.cpp SplashWidget.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h \
 		panelWidget.h \

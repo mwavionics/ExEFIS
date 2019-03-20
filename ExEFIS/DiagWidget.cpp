@@ -86,10 +86,10 @@ void DiagWidget::pollTimerExp(void)
 	int status = adhr->getDataSet(&data);	
 	
 	textEditadhrs->setText(
-		QString("Static Press (psi)") + '\r' + '\n' +
-		QString::number(data.staticPressurePSI, 'f', 3) + '\r' + '\n' +
-		"Pitot Press (mBar)" + '\r' + '\n' +
-		QString::number(data.aspPressurePSI, 'f', 4) + '\r' + '\n' +
+		QString("Altitude") + '\r' + '\n' +
+		QString::number(data.altitude, 'f', 3) + '\r' + '\n' +
+		"Airspeed MPH" + '\r' + '\n' +
+		QString::number(data.airspeed, 'f', 4) + '\r' + '\n' +
 		+ '\r' + '\n' +
 		"Orientation (deg)" + '\r' + '\n' +
 		QString::number(data.roll, 'f', 3) + '\r' + '\n' +
@@ -129,13 +129,5 @@ void DiagWidget::readRegisterButtonClicked()
 
 void DiagWidget::readCalibrationButtonClicked()
 {
-	char calData[22];
-	if (adhr->getOffsets(calData) == 1)
-	{
-		this->textEditconfig->setText("");
-		for (int i = 0; i < 22; i++)
-		{
-			this->textEditconfig->append(QString::number(calData[i], 16));
-		}
-	}
+	
 }

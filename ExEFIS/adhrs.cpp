@@ -11,7 +11,11 @@
 #include <QTimer>
 #include <QWidget>
 
+#include "airspeed.h"
+#include "altitude.h"
 
+static AHRS_CAL cal;
+static AHRS_CAL defaultcal;
 /**********************************************************************************************//**
 * Module: adhrs::adhrs
 ***************************************************************************************************
@@ -24,107 +28,24 @@
 * @author
 * @li SSK - 11/06/17 - Created & Commented
 **************************************************************************************************/
-adhrs::adhrs(bool domagtest, bool showmagvectors)
+adhrs::adhrs(AHRS_CAL* pCalibration, bool domagtest, bool showmagvectors)
 {	
 	staticpress = new hsc_pressure();
-	staticpress->set_params(15, 0);
+	staticpress->set_params(pCalibration->staticPressMax, pCalibration->staticPressMin);
 	airspeed = new hsc_pressure(1);
-	airspeed->set_params(1, -1);
+	airspeed->set_params(pCalibration->airspeedPressMax, pCalibration->airspeedPressMin);	
 
-	//NOTE: these are static so that the pigpio callback for the interrupt has access to them
-	static float gyroBias[3];
-	gyroBias[0] = 0.0;
-	gyroBias[1] = 0.0;
-	gyroBias[2] = 0.0;	
+	hrs = new mpudriver(pCalibration->gyroBias, pCalibration->accelBias, 
+		pCalibration->magBias, pCalibration->magScale, pCalibration->axisremap);				
+	performMagTest = domagtest;
+	showMagVectors = showmagvectors;
 	
-	static float accelBias[3];
-	accelBias[0] = 0;
-	accelBias[1] = 0;
-	accelBias[2] = 0;
-	
-	static float magBias[3];
-	magBias[0] = 0;
-	magBias[1] = 0;
-	magBias[2] = 0;
-	
-	static float magScale[3];
-	magScale[0] = 1;
-	magScale[1] = 1;
-	magScale[2] = 1;	
-	
-	static float axisremap[12];
-	axisremap[0] = 2.0; //zaxis on imu is x axis for EFIS
-	axisremap[1] = 1.1;  //yaxis on imu is y axis for EFIS
-	axisremap[2] = 0.1;  //xaxis on imu is z axis for EFIS
-	axisremap[3] = 1.0;  //xaxis gyro for EFIS is not inverted
-	axisremap[4] = 1.0;   //xaxis accel for EFIS is not inverted
-	axisremap[5] = 1.0;   //xaxis mag for EFIS is not inverted
-	axisremap[6] = -1.0;   //yaxis gyro for EFIS is inverted
-	axisremap[7] = 1.0;    //yaxis accel for EFIS is not inverted
-	axisremap[8] = 1.0;    //yaxis mag for EFIS is not inverted
-	axisremap[9] = -1.0;   //zaxis gyro for EFIS is not inverted
-	axisremap[10] = 1.0;    //zaxis accel for EFIS is not inverted
-	axisremap[11] = 1.0;    //zaxis mag for EFIS is not inverted
-	
-	//Initialize the caldata to all invalid values
-	for (int i = 0; i < 24; i++)
-	{
-		caldata[i] = 10000.0f;
-	}	
-	
-	static float* pGyroBias = NULL;
-	static float* pAccelBias = NULL;
-	static float* pMagBias = NULL;
-	static float* pMagScale = NULL; 
-	static float* pAxisRemap = NULL;
-	
-	/* Search the /home/pi directory for a sensor cal file
-	 * This has been udpated to allow sensorcal_serialnumber.txt files
-	 * This way MW Avionics can keep sensorcal files as backups for each SN*/
-	bool cal = false;
-	QDir directory("/home/pi");
-	qDebug() << "Searching " << directory.path() << " for calibration file";
-	QFileInfoList files = directory.entryInfoList(QStringList() << "*.txt" << "*.TXT", QDir::Files);
-	QString filename = NULL;
-	int num = files.count();
-	for (int i = 0; i < num; i++)
-	{
-		QString fn = files.at(i).fileName();		
-		if (fn.contains("sensorcal", Qt::CaseInsensitive))
-		{
-			filename = files.at(i).filePath();			
-		}
-	}
-	if (filename != NULL)
-	{	
-		QFile *calfile = new QFile(filename);
-		if (calfile->exists())
-		{
-			qDebug() << "calfile exists" << calfile->fileName();
-			if (calfile->open(QIODevice::ReadOnly))
-			{
-				while (!calfile->atEnd()) {
-					QByteArray line = calfile->readLine();
-					calfile_process_line(line, caldata);
-				}
-				/* do we calibrate?*/
-				cal = calfile_validate(caldata, pGyroBias, pAccelBias, pMagBias, pMagScale, pAxisRemap);
-				if (cal) 
-				{
-					qDebug() << "found valid caldata" << calfile->fileName();
-					//mpudriver *hrs = new mpudriver(pGyroBias, pAccelBias, pMagBias, pMagScale, pAxisRemap);				
-					mpudriver *hrs = new mpudriver(&caldata[0], &caldata[3], &caldata[6], &caldata[9], &caldata[12]);
-					int s = hrs->Init(true, false, domagtest, showmagvectors);
-				}				
-			}			
-		}		
-	}
-	if (!cal)
-	{			
-		qDebug() << "using zero'd caldata, no file found" ;
-		mpudriver *hrs = new mpudriver(gyroBias, accelBias, magBias, magScale, axisremap);				
-		int s = hrs->Init(true, false, domagtest, showmagvectors);		
-	}
+
+}
+
+void adhrs::Init(void)
+{
+	int s = hrs->Init(true, false, performMagTest, showMagVectors);		
 }
 
 /**********************************************************************************************//**
@@ -165,8 +86,8 @@ int adhrs::getDataSet(AHRS_DATA* data)
 		error = 0;
 		if (!error)
 		{	
-			data->staticPressurePSI = staticpress->getPressure();
-			data->aspPressurePSI = airspeed->getPressure();
+			data->altitude = altitude::getAltitudeFt(staticpress->getPressure(), altimeterSetting);
+			data->airspeed = airspeed::getIASMph(airspeed->getPressure());
 			data->heading = hrs->getHeading() * (180.0f / M_PI);
 			data->roll = hrs->getRoll() * (180.0f / M_PI);
 			data->pitch = hrs->getPitch() * (180.0f / M_PI);
@@ -185,221 +106,374 @@ int adhrs::getDataSet(AHRS_DATA* data)
 	return status;
 }
 
-int adhrs::getOffsets(char* calData)
+bool adhrs::getWingsLevel(void)
 {
-	if (true) //get offsets)
-	{
-		
-		return 1;
-	}
-	return 0;
+	return hrs->getWingsLevel();
 }
 
-
-int adhrs::setOffsets(char* calData)
-{
-	//set offsets
-	return 1;
-}
-
-
-void adhrs::getCalibration(char* cal)
+void adhrs::getCalibration(AHRS_CAL* calibration)
 {	
-	//get calibration
+	calibration = pCal;
 }
 
+void adhrs::setAltimeterSetting(int setting, int settingPrec)
+{
+	altimeterSetting = setting/pow(10, settingPrec);
+}
 
-void adhrs::calfile_process_line(QByteArray &line, float* data)
+/**********************************************************************************************//**
+* Module: adhrs::calfile_process_line
+***************************************************************************************************
+* @brief	Static funciton used for processing lines out of an adhrs  cal file
+* @note		The validation is "interesting" - first we invalidate everything. Then if it exists in 
+*			the calfile, we validate it, then if it's out of bounds we invalidate it again. I didn't
+*			want to add another flag to say if was in the file or not, and didn't want to invalidate
+*			everything based on value alone
+* @todo		
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 03/15/19 - Created & Commented
+**************************************************************************************************/
+void adhrs::calfile_process_line(QByteArray &line)
 {
 	if (line.startsWith("Gyro Offset X"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[0] = val;
+		cal.gyroBias[0] = val;
+		cal.gyroValid = true;
 	}
 	if (line.startsWith("Gyro Offset Y"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[1] = val;
+		cal.gyroBias[1] = val;
+		cal.gyroValid = true;
 	}
 	if (line.startsWith("Gyro Offset Z"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[2] = val;
+		cal.gyroBias[2] = val;
+		cal.gyroValid = true;
 	}
 	if (line.startsWith("Accel Offset X"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[3] = val;
+		cal.accelBias[0] = val;
+		cal.accelValid = true;
 	}
 	if (line.startsWith("Accel Offset Y"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[4] = val;
+		cal.accelBias[1] = val;
+		cal.accelValid = true;
 	}
 	if (line.startsWith("Accel Offset Z"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[5] = val;
+		cal.accelBias[2] = val;
+		cal.accelValid = true;
 	}
 	
 	if (line.startsWith("Mag Offset X"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[6] = val;
+		cal.magBias[0] = val;
+		cal.magBiasValid = true;
 	}
 	if (line.startsWith("Mag Offset Y"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[7] = val;
+		cal.magBias[1] = val;
+		cal.magBiasValid = true;
 	}
 	if (line.startsWith("Mag Offset Z"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[8] = val;
+		cal.magBias[2] = val;
+		cal.magBiasValid = true;
 	}
 	if (line.startsWith("Mag Scale X"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[9] = val;
+		cal.magScale[0] = val;
+		cal.magScaleValid = true;
 	}
 	if (line.startsWith("Mag Scale Y"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[10] = val;
+		cal.magScale[1] = val;
+		cal.magScaleValid = true;
 	}
 	if (line.startsWith("Mag Scale Z"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[11] = val;	
+		cal.magScale[2] = val;	
+		cal.magScaleValid = true;
 	}
 	if (line.startsWith("X axis Mapping"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[12] = val;
+		cal.axisremap[0] = val;
+		cal.axisRemapValid = true;
 	}
 	if (line.startsWith("Y axis Mapping"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[13] = val;
+		cal.axisremap[1] = val;
+		cal.axisRemapValid = true;
 	}
 	if (line.startsWith("Z axis Mapping"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[14] = val;
+		cal.axisremap[2] = val;
+		cal.axisRemapValid = true;
 	}
 	if (line.startsWith("X axis Gryo Sign"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[15] = val;
+		cal.axisremap[3] = val;
+		cal.axisRemapValid = true;
 	}
 	if (line.startsWith("X axis Accel Sign"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[16] = val;
+		cal.axisremap[4] = val;
+		cal.axisRemapValid = true;
 	}
 	if (line.startsWith("X axis Mag Sign"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[17] = val;
+		cal.axisremap[5] = val;
+		cal.axisRemapValid = true;
 	}
 	if (line.startsWith("Y axis Gryo Sign"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[18] = val;
+		cal.axisremap[6] = val;
+		cal.axisRemapValid = true;
 	}
 	if (line.startsWith("Y axis Accel Sign"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[19] = val;
+		cal.axisremap[7] = val;
+		cal.axisRemapValid = true;
 	}
 	if (line.startsWith("Y axis Mag Sign"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[20] = val;
+		cal.axisremap[8] = val;
+		cal.axisRemapValid = true;
 	}
 	if (line.startsWith("Z axis Gryo Sign"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[21] = val;
+		cal.axisremap[9] = val;
+		cal.axisRemapValid = true;
 	}
 	if (line.startsWith("Z axis Accel Sign"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[22] = val;
+		cal.axisremap[10] = val;
+		cal.axisRemapValid = true;
 	}
 	if (line.startsWith("Z axis Mag Sign"))
 	{		
 		float val = line.split('"')[1].toFloat();
-		data[23] = val;
+		cal.axisremap[11] = val;
+		cal.axisRemapValid = true;
+	}
+	if (line.startsWith("Static Min Press"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		cal.staticPressMin = val;
+		cal.staticPressValid = true;
+	}
+	if (line.startsWith("Static Max Press"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		cal.staticPressMax = val;
+		cal.staticPressValid = true;
+	}
+	if (line.startsWith("Airspeed Min Press"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		cal.airspeedPressMin = val;
+		cal.airspeedPressValid = true;
+	}
+	if (line.startsWith("Airspeed Max Press"))
+	{		
+		float val = line.split('"')[1].toFloat();
+		cal.airspeedPressMax = val;
+		cal.airspeedPressValid = true;
 	}
 
 }
 
-
-bool adhrs::calfile_validate(float* data,
-	volatile float* pGyroBias,
-	volatile float* pAccelBias,
-	volatile float* pMagBias,
-	volatile float* pMagScale, 
-	volatile float* pAxisRemap)
+/**********************************************************************************************//**
+* Module: adhrs::calfile_validate
+***************************************************************************************************
+* @brief	Static funciton used for validating an ahdrs calibration file
+* @note		
+* @todo		
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 03/15/19 - Created & Commented
+**************************************************************************************************/
+bool adhrs::calfile_validate()
 {
-	bool gyrovalid = true;
 	//Gyro
-	if(data[0] > GYRO_POS_VALID || data[0] < GYRO_NEG_VALID) gyrovalid = false;
-	if (data[1] > GYRO_POS_VALID || data[1] < GYRO_NEG_VALID) gyrovalid = false;
-	if (data[2] > GYRO_POS_VALID || data[2] < GYRO_NEG_VALID) gyrovalid = false;
-	if (!gyrovalid)qDebug() << "gyro data not valid";
-	pGyroBias = gyrovalid ? &data[0] : NULL;
+	for(int i = 0 ; i < 3 && cal.gyroValid ; i++)
+	{
+		if (cal.gyroBias[i] > GYRO_POS_VALID || cal.gyroBias[i] < GYRO_NEG_VALID) cal.gyroValid = false;
+	}
+	if (!cal.gyroValid)qDebug() << "gyro data not valid";
 	
 	//Accel
-	bool accelvalid = true;
-	if (data[3] > ACCEL_POS_VALID || data[3] < ACCEL_NEG_VALID) accelvalid = false;
-	if (data[4] > ACCEL_POS_VALID || data[4] < ACCEL_NEG_VALID) accelvalid = false;
-	if (data[5] > ACCEL_POS_VALID || data[5] < ACCEL_NEG_VALID) accelvalid = false;
-	if (!accelvalid)qDebug() << "accel data not valid";
-	pAccelBias = accelvalid ? &data[3] : NULL;
+	for(int i = 0 ; i < 3 && cal.accelValid ; i++)
+	{
+		if (cal.accelBias[i] > ACCEL_POS_VALID || cal.accelBias[i] < ACCEL_NEG_VALID) cal.accelValid = false;
+	}
+	if (!cal.accelValid)qDebug() << "accel data not valid";	
 	
 	//Mag Offset
-	bool magvalid = true;
-	if (data[6] > MAGBIAS_POS_VALID || data[6] < MAGBIAS_NEG_VALID) magvalid = false;
-	if (data[7] > MAGBIAS_POS_VALID || data[7] < MAGBIAS_NEG_VALID) magvalid = false;
-	if (data[8] > MAGBIAS_POS_VALID || data[8] < MAGBIAS_NEG_VALID) magvalid = false;
-	if (!magvalid)qDebug() << "mag bias not valid";
-	pMagBias = magvalid ? &data[6] : NULL;
+	for(int i = 0 ; i < 3 && cal.magBiasValid ; i++)
+	{
+		if (cal.magBias[i] > MAGBIAS_POS_VALID || cal.magBias[i] < MAGBIAS_NEG_VALID) cal.magBiasValid = false;
+	}
+	if (!cal.magBiasValid)qDebug() << "mag bias not valid";
 	
 	//Mag Scale
-	bool msvalid = true;
-	if (data[9] > MAGSCALE_POS_VALID || data[9] < MAGSCALE_NEG_VALID) msvalid = false;
-	if (data[10] > MAGSCALE_POS_VALID || data[10] < MAGSCALE_NEG_VALID) msvalid = false;
-	if (data[11] > MAGSCALE_POS_VALID || data[11] < MAGSCALE_NEG_VALID) msvalid = false;
-	if (!msvalid)qDebug() << "mag scale not valid";
-	pMagScale = msvalid ? &data[9] : NULL;
+	for(int i = 0 ; i < 3 && cal.magScaleValid ; i++)
+	{
+		if (cal.magScale[i] > MAGSCALE_POS_VALID || cal.magScale[i] < MAGSCALE_NEG_VALID) cal.magScaleValid = false;
+	}
+	if (!cal.magScaleValid)qDebug() << "mag scale not valid";
+		
+	//Axis Remap
+	for(int i = 0 ; i < 12 && cal.axisRemapValid ; i++)
+	{
+		if (cal.axisremap[i] > AXISREMAP_POS_VALID || cal.axisremap[i] < AXISREMAP_NEG_VALID) cal.axisRemapValid = false;
+	}
+	if (!cal.axisRemapValid) qDebug() << "axis remap not valid";
 	
-	//axis Remap
-	bool amvalid = true;
-	if (data[12] > AXISREMAP_POS_VALID || data[12] < AXISREMAP_NEG_VALID) amvalid = false;
-	if (data[13] > AXISREMAP_POS_VALID || data[13] < AXISREMAP_NEG_VALID) amvalid = false;
-	if (data[14] > AXISREMAP_POS_VALID || data[14] < AXISREMAP_NEG_VALID) amvalid = false;
-	if (data[15] > AXISREMAP_POS_VALID || data[15] < AXISREMAP_NEG_VALID) amvalid = false;
-	if (data[16] > AXISREMAP_POS_VALID || data[16] < AXISREMAP_NEG_VALID) amvalid = false;
-	if (data[17] > AXISREMAP_POS_VALID || data[17] < AXISREMAP_NEG_VALID) amvalid = false;
-	if (data[18] > AXISREMAP_POS_VALID || data[18] < AXISREMAP_NEG_VALID) amvalid = false;
-	if (data[19] > AXISREMAP_POS_VALID || data[19] < AXISREMAP_NEG_VALID) amvalid = false;
-	if (data[20] > AXISREMAP_POS_VALID || data[20] < AXISREMAP_NEG_VALID) amvalid = false;
-	if (data[21] > AXISREMAP_POS_VALID || data[21] < AXISREMAP_NEG_VALID) amvalid = false;
-	if (data[22] > AXISREMAP_POS_VALID || data[22] < AXISREMAP_NEG_VALID) amvalid = false;
-	if (data[23] > AXISREMAP_POS_VALID || data[23] < AXISREMAP_NEG_VALID) amvalid = false;
-	if (!amvalid) qDebug() << "axis remap not valid";
-	pAxisRemap = amvalid ? &data[12] : NULL;
+	//Static Pressure	
+	if(cal.staticPressMax > PRESSURE_MAX_VALID || cal.staticPressMin < PRESSURE_MIN_VALID || cal.staticPressMax < cal.staticPressMin) cal.staticPressValid = false;
 	
-	return (gyrovalid || accelvalid || magvalid || msvalid || amvalid);
+	if (!cal.staticPressValid) qDebug() << "static pressure cal not valid";
+	
+	//Airspeed Pressure	
+	if(cal.airspeedPressMax > PRESSURE_MAX_VALID || cal.airspeedPressMin < PRESSURE_MIN_VALID || cal.airspeedPressMax < cal.airspeedPressMin) cal.airspeedPressValid = false;
+	
+	if (!cal.airspeedPressValid) qDebug() << "airspeed pressure cal not valid";
+	
+	return (cal.gyroValid || cal.accelValid || cal.magBiasValid || cal.magScaleValid || cal.axisRemapValid);
 }
 
-
-
-
-
-bool adhrs::getWingsLevel(void)
+/**********************************************************************************************//**
+* Module: adhrs::processCalibrationFile
+***************************************************************************************************
+* @brief	Static funciton used for loading a cal file to hand to this class on init.
+* @note		
+* @todo		
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 03/15/19 - Created & Commented
+**************************************************************************************************/
+AHRS_CAL* adhrs::processCalibrationFile(QFile* file)
 {
-	return hrs->getWingsLevel();
+	AHRS_CAL* pCal = &defaultcal;
+	
+	bool success = false;
+	//invalidate the calibration
+	cal.gyroValid = false;
+	cal.accelValid = false;
+	cal.magBiasValid = false;
+	cal.magScaleValid = false;
+	cal.axisRemapValid = false;
+	cal.staticPressValid = false;
+	cal.airspeedPressValid = false;
+	
+	adhrs::default_calibration(&cal);
+	adhrs::default_calibration(&defaultcal);
+	
+	if (file != NULL)
+	{	
+		if (file->exists())
+		{
+			qDebug() << "adhrs calfile exists - processing..." << file->fileName();
+			if (file->open(QIODevice::ReadOnly))
+			{
+				while (!file->atEnd()) {
+					QByteArray line = file->readLine();
+					calfile_process_line(line);
+				}
+				/* do we calibrate?*/
+				qDebug() << "valid calfile loaded";
+				if (calfile_validate())
+				{
+					//If anything in the file is valid, we'll use the cal which may or may not be mostly defaulted
+					pCal = &cal;
+					success = true;
+				}
+				file->close();
+			}			
+		}
+	}
+	if (!success) qDebug() << "***USING DEFAULT CALIBRATION***";
+	return pCal;
+}
+
+/**********************************************************************************************//**
+* Module: adhrs::processCalibrationFile
+***************************************************************************************************
+* @brief	incase we don't get a valid calfile, use these values
+* @note		
+* @todo		
+* @returns			
+***************************************************************************************************
+***************************************************************************************************
+* @author
+* @li SSK - 03/15/19 - Created & Commented
+**************************************************************************************************/
+void adhrs::default_calibration(AHRS_CAL* cal)
+{	
+	cal->gyroBias[0] = 0.0;
+	cal->gyroBias[1] = 0.0;
+	cal->gyroBias[2] = 0.0;	
+	
+	cal->accelBias[0] = 0;
+	cal->accelBias[1] = 0;
+	cal->accelBias[2] = 0;
+
+	cal->magBias[0] = 0;
+	cal->magBias[1] = 0;
+	cal->magBias[2] = 0;
+	
+	cal->magScale[0] = 1;
+	cal->magScale[1] = 1;
+	cal->magScale[2] = 1;	
+	
+	cal->axisremap[0] = 2.0;    //zaxis on imu is x axis for EFIS
+	cal->axisremap[1] = 1.1;     //yaxis on imu is y axis for EFIS
+	cal->axisremap[2] = 0.1;     //xaxis on imu is z axis for EFIS
+	cal->axisremap[3] = 1.0;     //xaxis gyro for EFIS is not inverted
+	cal->axisremap[4] = 1.0;      //xaxis accel for EFIS is not inverted
+	cal->axisremap[5] = 1.0;       //xaxis mag for EFIS is not inverted
+	cal->axisremap[6] = -1.0;      //yaxis gyro for EFIS is inverted
+	cal->axisremap[7] = 1.0;       //yaxis accel for EFIS is not inverted
+	cal->axisremap[8] = 1.0;       //yaxis mag for EFIS is not inverted
+	cal->axisremap[9] = -1.0;      //zaxis gyro for EFIS is not inverted
+	cal->axisremap[10] = 1.0;       //zaxis accel for EFIS is not inverted
+	cal->axisremap[11] = 1.0;       //zaxis mag for EFIS is not inverted	
+	
+	cal->airspeedPressMax = 1.0f;
+	cal->airspeedPressMin = -1.0f;
+	cal->staticPressMax = 15.0f;
+	cal->staticPressMin = 0.0f;
+
 }

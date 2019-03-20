@@ -12,6 +12,8 @@ static float accelbuffer[3][accelbuffersize];
 static double eulerbuffer[3][eulerbuffersize];
 static timeval last;
 
+
+
 /**********************************************************************************************//**
 * Module: SKFilter::SKFilter
 ***************************************************************************************************
