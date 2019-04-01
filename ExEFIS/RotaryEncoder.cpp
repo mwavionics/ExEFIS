@@ -42,10 +42,34 @@ void RotaryEncoder::eventHandler(int gpio, int level, unsigned tick)
 			int sum = (enc->lastEncoded << 2) | encoded;
 				
 			/* need to throw out the encoder ticks that land between detents on the knob...*/
-			/* sum == 13 || sum == 11 value ++*/
-			if (sum == 0b1101 || /*sum == 0b0100 || sum == 0b0010 || */ sum == 0b1011) enc->value++;
-			/* sum == 14 || sum == 7 value -- */
-			if (sum == 0b1110 ||  sum == 0b0111 /* || sum == 0b0001 || sum == 0b1000*/) enc->value--;
+			if (enc->config == 0)
+			{
+				if (sum == 0b1101 || sum == 0b0100 || sum == 0b0010 ||  sum == 0b1011) enc->value++;
+				/* sum == 14 || sum == 7 value -- */
+				if (sum == 0b1110 ||  sum == 0b0111  || sum == 0b0001 || sum == 0b1000) enc->value--;
+			}
+			if (enc->config == 1)
+			{	
+				/* sum == 13 || sum == 11 value ++*/
+				if (sum == 0b1101 || /*sum == 0b0100 || sum == 0b0010 || */ sum == 0b1011) enc->value++;
+				/* sum == 14 || sum == 7 value -- */
+				if (sum == 0b1110 ||  sum == 0b0111 /* || sum == 0b0001 || sum == 0b1000*/) enc->value--;
+			}
+			if (enc->config == 2)
+			{
+				/* sum == 13 || sum == 11 value ++*/
+				if (sum == 0b1101 /*|| sum == 0b0100 || sum == 0b0010 ||  sum == 0b1011*/) enc->value++;
+				/* sum == 14 || sum == 7 value -- */
+				if (sum == 0b1110 /* ||  sum == 0b0111 || sum == 0b0001 || sum == 0b1000*/) enc->value--;
+			}
+			if (enc->config == 3)
+			{
+				/* sum == 13 || sum == 11 value ++*/
+				if (/*sum == 0b1101 || sum == 0b0100 || sum == 0b0010 ||*/  sum == 0b1011) enc->value++;
+				/* sum == 14 || sum == 7 value -- */
+				if (/*sum == 0b1110  || */  sum == 0b0111 /* || sum == 0b0001 || sum == 0b1000 */) enc->value--;
+			}
+			
 
 		//	printf("sum %d value %d \n", sum, enc->value);	
 			enc->lastEncoded = encoded;	

@@ -18,13 +18,34 @@ int mode = 0;
 
 QGridLayout *mainLayout;
 
-panelWidget::panelWidget(QWidget *parent)
+panelWidget::panelWidget(QWidget *parent, QFile* f, knobs *k)
 	: QWidget(parent)
 {
 	setCursor(Qt::BlankCursor);		
 	
+	settingsFile = f;
+	if (!loadSettingsFile())
+	{
+		saveSettingsFile();
+	}		
+
+	QColor e = QColor::fromRgb(settings.earthColor[0],
+		settings.earthColor[1],
+		settings.earthColor[2],
+		settings.earthColor[3]);
+	QColor s = QColor::fromRgb(settings.skyColor[0],
+		settings.skyColor[1],
+		settings.skyColor[2],
+		settings.skyColor[3]);
+	
+	knob = k;
+	knob->right->setConfig(settings.encoderConfig);
+	//knob->left->getPress(true);
+	knob->right->getPress(true);
+	
 	/* SSK Note that this order matters and affects draw order*/
-	h1 = new horizon_instrument(this);
+	
+	h1 = new horizon_instrument(this, e, s, settings.horizonOffset);
 	//r1 = new round_instrument(this);
 	vi1 = new vertical_instrument(this, Qt::black);
 
@@ -32,7 +53,7 @@ panelWidget::panelWidget(QWidget *parent)
 	vi2 = new vertical_instrument(this, Qt::black);
 	vi2->setupInstrument(altvals, 10);
 	vi2->setValue(6350);
-	vi2->setting = 2992;
+	vi2->setting = settings.altimeterSetting;
 	vi2->showSetting = true;
 	
 	ss = new slipskid_instrument(this);
@@ -75,17 +96,6 @@ panelWidget::panelWidget(QWidget *parent)
 	
 
 }
-
-panelWidget::panelWidget(QFile* f)
-	: panelWidget()
-{
-	settingsFile = f;
-	if (!loadSettingsFile())
-	{
-		saveSettingsFile();
-	}
-}
-
 
 panelWidget::~panelWidget()
 {
@@ -150,6 +160,9 @@ void panelWidget::onTimer(void)
 		if (mode == 2)
 		{
 			vi2->toggleEditMode();
+			adhr->setAltimeterSetting(vi2->setting, vi2->settingPrec);
+			settings.altimeterSetting = vi2->setting;
+			saveSettingsFile();
 			//Commit file here
 		}
 		if (mode == 3)
@@ -161,27 +174,40 @@ void panelWidget::onTimer(void)
 		{
 			dg->toggleEditMode();
 		}
-		//Show the menu
 		if (mode == 5)
+		{
+			r->toggleEditMode();
+			r->setSetting(h1->verticalOffset);
+			knob->right->setValue(r->setting);
+		}
+		if (mode == 6)
+		{
+			r->toggleEditMode();
+			h1->setVerticalOffset(r->setting);
+			settings.horizonOffset = r->setting;
+			saveSettingsFile();
+		}
+		//Show the menu
+		if (mode == 7)
 		{
 			mw->show = true;
 			knob->right->setValue(sw->value);
 			oldSWMode = mw->value;
 		}
 		//Select the menu
-		if (mode == 6)
+		if (mode == 8)
 		{
 			mw->show = false;			
 			if (mw->value == 0) 
 			{				
 				system("gpio write 26 1");
 			}
-			if (mw->value == 2)
+			if (mw->value == 1)
 			{
 				system("gpio write 26 0");
 				system("i2cset -y 1 0x2f 0x00 0x0000 w");
 			}
-			if (mw->value == 1)
+			if (mw->value == 2)
 			{				
 				system("gpio write 26 0"); // HW Rev 2
 				system("i2cset -y 1 0x2f 0x00 0xFFFF w");
@@ -191,7 +217,7 @@ void panelWidget::onTimer(void)
 				exit(0);
 			}
 		}
-		if (mode >= 6)
+		if (mode >= 8)
 		{			
 			mode = 0;	
 		}
@@ -221,6 +247,12 @@ void panelWidget::onTimer(void)
 		knob->right->setValue(dg->setting);
 	}
 	
+	if (r->editMode)
+	{
+		r->setSetting(knob->right->getValue());    //NOTE FIXED FOR 3.5 Display
+		h1->setVerticalOffset(r->setting);
+		knob->right->setValue(r->setting);
+	}
 	
 	if (knob->right->getPress(false) > 10)
 	{
@@ -236,17 +268,12 @@ void panelWidget::setADHRS(adhrs* a)
 	adhr = a;
 	//Init the adhrs when we're ready, if you do this before, you wind up with a
 	//strange almost "multithreaded" application for a bit...
+	adhr->setAltimeterSetting(settings.altimeterSetting, vi2->settingPrec);
 	adhr->Init();
 }
 
 
-void panelWidget::setKNOBS(knobs* k)
-{
-	/* be sure and read the presses and clear them when you set the variable*/
-	knob = k;
-	//knob->left->getPress(true);
-	knob->right->getPress(true);
-}
+
 
 void panelWidget::setSettingsFile(QFile* file)
 {
@@ -307,36 +334,67 @@ bool panelWidget::loadSettingsFile()
 
 bool panelWidget::saveSettingsFile()
 {
+	bool success = false;
 	if (settingsFile != NULL)
 	{	
 		// no need to check if the file exists, open will create it
-		settingsFile->open(QIODevice::ReadWrite);
-		QString str;
-		str.sprintf("Sky Color , %d, %d, %d, %d,\r\n", settings.skyColor[0], settings.skyColor[1], settings.skyColor[2], settings.skyColor[3]);
-		settingsFile->write(str.toUtf8());
-		settingsFile->write("Earth Color , 114, 59, 34, 255 ,\r\n");
-		settingsFile->write("Encoder Config , 0 ,\r\n");
-		settingsFile->write("Horizon Offset , 0 ,\r\n");
-		settingsFile->write("Altimeter Setting , 29.92 ,\r\n");
-		settingsFile->write("For 030 Steer , 030 ,\r\n");
-		settingsFile->write("For 060 Steer , 060 ,\r\n");
-		settingsFile->write("For 090 Steer , 090 ,\r\n");
-		settingsFile->write("For 120 Steer , 120 ,\r\n");
-		settingsFile->write("For 150 Steer , 150 ,\r\n");
-		settingsFile->write("For 180 Steer , 180 ,\r\n");
-		settingsFile->write("For 210 Steer , 210 ,\r\n");
-		settingsFile->write("For 240 Steer , 240 ,\r\n");
-		settingsFile->write("For 270 Steer , 270 ,\r\n");
-		settingsFile->write("For 300 Steer , 300 ,\r\n");
-		settingsFile->write("For 330 Steer , 330 ,\r\n");
-		settingsFile->write("For 360 Steer , 360 ,\r\n");
+		settingsFile->open(QIODevice::ReadWrite);	
+		
+		settingsFile->write(QString().sprintf("Sky Color , %d, %d, %d, %d,\r\n", settings.skyColor[0], settings.skyColor[1], settings.skyColor[2], settings.skyColor[3]).toUtf8());
+		settingsFile->write(QString().sprintf("Earth Color , %d, %d, %d, %d,\r\n", settings.earthColor[0], settings.earthColor[1], settings.earthColor[2], settings.earthColor[3]).toUtf8());
+		settingsFile->write(QString().sprintf("Encoder Config , %d,\r\n", settings.encoderConfig ).toUtf8());
+		settingsFile->write(QString().sprintf("Horizon Offset , %d,\r\n", settings.horizonOffset ).toUtf8());
+		settingsFile->write(QString().sprintf("Altimeter Setting , %d,\r\n", settings.altimeterSetting ).toUtf8());
+		settingsFile->write(QString().sprintf("For 030 Steer , %d,\r\n", settings.steerCard[0]).toUtf8()) ;
+		settingsFile->write(QString().sprintf("For 060 Steer , %d,\r\n", settings.steerCard[1]).toUtf8());
+		settingsFile->write(QString().sprintf("For 090 Steer , %d,\r\n", settings.steerCard[2]).toUtf8());
+		settingsFile->write(QString().sprintf("For 120 Steer , %d,\r\n", settings.steerCard[3]).toUtf8());
+		settingsFile->write(QString().sprintf("For 150 Steer , %d,\r\n", settings.steerCard[4]).toUtf8());
+		settingsFile->write(QString().sprintf("For 180 Steer , %d,\r\n", settings.steerCard[5]).toUtf8());
+		settingsFile->write(QString().sprintf("For 210 Steer , %d,\r\n", settings.steerCard[6]).toUtf8());
+		settingsFile->write(QString().sprintf("For 240 Steer , %d,\r\n", settings.steerCard[7]).toUtf8());
+		settingsFile->write(QString().sprintf("For 270 Steer , %d,\r\n", settings.steerCard[8]).toUtf8());
+		settingsFile->write(QString().sprintf("For 300 Steer , %d,\r\n", settings.steerCard[9]).toUtf8());
+		settingsFile->write(QString().sprintf("For 330 Steer , %d,\r\n", settings.steerCard[10]).toUtf8());
+		settingsFile->write(QString().sprintf("For 360 Steer , %d,\r\n", settings.steerCard[11]).toUtf8());
 		settingsFile->close();		
 	}
+	success = true;
 }
 
 
 void panelWidget::settingsFile_ProcessLine(QByteArray line)
 {
+	if (line.startsWith("Sky Color"))
+	{		
+		settings.skyColor[0] = line.split(',')[1].toInt();
+		settings.skyColor[1] = line.split(',')[2].toInt();
+		settings.skyColor[2] = line.split(',')[3].toInt();
+		settings.skyColor[3] = line.split(',')[4].toInt();		
+	}
+	if (line.startsWith("Earth Color"))
+	{		
+		settings.earthColor[0] = line.split(',')[1].toInt();
+		settings.earthColor[1] = line.split(',')[2].toInt();
+		settings.earthColor[2] = line.split(',')[3].toInt();
+		settings.earthColor[3] = line.split(',')[4].toInt();		
+	}
+	if (line.startsWith("Encoder Config")) settings.encoderConfig = line.split(',')[1].toInt();
+	if (line.startsWith("Horizon Offset")) settings.horizonOffset = line.split(',')[1].toInt();
+	if (line.startsWith("Altimeter Setting")) settings.altimeterSetting = line.split(',')[1].toInt();
+	if (line.startsWith("For 030 Steer")) settings.steerCard[0] = line.split(',')[1].toInt();
+	if (line.startsWith("For 060 Steer")) settings.steerCard[1] = line.split(',')[1].toInt();
+	if (line.startsWith("For 090 Steer")) settings.steerCard[2] = line.split(',')[1].toInt();
+	if (line.startsWith("For 120 Steer")) settings.steerCard[3] = line.split(',')[1].toInt();
+	if (line.startsWith("For 150 Steer")) settings.steerCard[4] = line.split(',')[1].toInt();
+	if (line.startsWith("For 180 Steer")) settings.steerCard[5] = line.split(',')[1].toInt();
+	if (line.startsWith("For 210 Steer")) settings.steerCard[6] = line.split(',')[1].toInt();
+	if (line.startsWith("For 240 Steer")) settings.steerCard[7] = line.split(',')[1].toInt();
+	if (line.startsWith("For 270 Steer")) settings.steerCard[8] = line.split(',')[1].toInt();
+	if (line.startsWith("For 300 Steer")) settings.steerCard[9] = line.split(',')[1].toInt();
+	if (line.startsWith("For 330 Steer")) settings.steerCard[10] = line.split(',')[1].toInt();
+	if (line.startsWith("For 360 Steer")) settings.steerCard[11] = line.split(',')[1].toInt();
+	
 }
 
 
@@ -350,21 +408,21 @@ bool panelWidget::defaultSettings()
 	settings.earthColor[1] = 59;
 	settings.earthColor[2] = 34;
 	settings.earthColor[3] = 255; 
-	settings.encoderConfig = 0;
+	settings.encoderConfig = 1;
 	settings.horizonOffset = 0;
-	settings.AltimeterSetting = 2992;
-	settings.SteerCard[0] = 30;
-	settings.SteerCard[1] = 60;
-	settings.SteerCard[2] = 90;
-	settings.SteerCard[3] = 120;
-	settings.SteerCard[4] = 150;
-	settings.SteerCard[5] = 180;
-	settings.SteerCard[6] = 210;
-	settings.SteerCard[7] = 240;
-	settings.SteerCard[8] = 270;
-	settings.SteerCard[9] = 300;
-	settings.SteerCard[10] = 330;
-	settings.SteerCard[11] = 360;
+	settings.altimeterSetting = 2992;
+	settings.steerCard[0] = 30;
+	settings.steerCard[1] = 60;
+	settings.steerCard[2] = 90;
+	settings.steerCard[3] = 120;
+	settings.steerCard[4] = 150;
+	settings.steerCard[5] = 180;
+	settings.steerCard[6] = 210;
+	settings.steerCard[7] = 240;
+	settings.steerCard[8] = 270;
+	settings.steerCard[9] = 300;
+	settings.steerCard[10] = 330;
+	settings.steerCard[11] = 360;
 		
 }
 

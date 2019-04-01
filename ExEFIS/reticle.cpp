@@ -8,6 +8,12 @@ reticle::reticle(QWidget *parent)
 	: QWidget(parent)
 {
 	wingsLevel = false;
+	setting = 0;
+	blinking = false;
+	
+	blinkTimer = new QTimer(this);
+	blinkTimer->setInterval(500);
+	connect(blinkTimer, SIGNAL(timeout()), this, SLOT(onBlinkTimer()));
 }
 
 
@@ -32,6 +38,8 @@ void reticle::paintEvent(QPaintEvent *event)
 	painter.setBrush(Qt::white);
 	if (wingsLevel)	painter.setPen(Qt::black);
 	else painter.setPen(Qt::red);
+	
+	if (blinking) painter.setPen(Qt::blue);
 	
 	painter.drawPolygon(points, 4);
 	/* Draw the horizontal bars */

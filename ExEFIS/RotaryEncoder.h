@@ -21,18 +21,24 @@ public:
 	void setValue(int val);
 	int getPress(bool clear);
 	bool getSinglePress(void);
+	void setConfig(int c)
+	{
+		config = c;
+	}
 	
 protected:
 	
 
 	int value = 0;
 	int press = 0;
+	int step = 0;
 	
 private:
 	int pin_a;
 	int pin_b;
 	int pin_c;
 	
+	int config = 0;
 	int lastEncoded;
 	int lastPress;
 	char lastPressState;

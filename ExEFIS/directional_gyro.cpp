@@ -119,6 +119,11 @@ void directional_gyro::paintEvent(QPaintEvent *event)
 	{
 		rects[k] = QRect(x + (horiz * 2*(k-1)) + shift, y, high, horiz);
 	}	
+	
+	QFont font = painter.font();
+	font.setPointSize(high / 5);
+	font.setWeight(QFont::DemiBold);
+	painter.setFont(font);
 
 	for (int k = 0; k < horiz_divs + 2; k++)
 	{

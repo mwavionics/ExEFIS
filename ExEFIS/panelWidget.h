@@ -18,8 +18,8 @@ typedef struct
 	int earthColor[4];
 	int encoderConfig;
 	int horizonOffset;
-	int AltimeterSetting;
-	int SteerCard[12];
+	int altimeterSetting;
+	int steerCard[12];
 }PANEL_SETTINGS;
 
 class panelWidget : public QWidget
@@ -27,11 +27,9 @@ class panelWidget : public QWidget
 	Q_OBJECT
 	
 public:
-	panelWidget(QWidget *parent = 0);
-	panelWidget(QFile* f);
+	panelWidget(QWidget *parent = 0, QFile* f = NULL, knobs* k = NULL);
 	~panelWidget();
 	void setADHRS(adhrs* a);
-	void setKNOBS(knobs* k);
 	void setSettingsFile(QFile* file);
 	
 public slots :

@@ -104,9 +104,14 @@ void vertical_instrument::paintEvent(QPaintEvent * /* event */)
 	QPoint bottomBRight(x + wide, y + tall);
 	QRect bottomRect(bottomTLeft, bottomBRight);
 	
+	QFont font = painter.font();
+	font.setPointSize(tall/20);
+	font.setWeight(QFont::DemiBold);
+	painter.setFont(font);
 
 	for (int j = 0; j < vertical_divs; j++)
 	{
+		
 		/* First index is the highest value of i becuase it reads top down high to low*/
 		painter.drawText(rects[j], Qt::AlignLeft, ((firstidx - j) > 0) ? QString::number(values[firstidx - j]) : " ");
 	}
