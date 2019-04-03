@@ -36,7 +36,7 @@ static const Mscale_t MSCALE    = MFS_16BITS;
 static const Mmode_t  MMODE     = M_100Hz;
 static const uint8_t SAMPLE_RATE_DIVISOR = 0x04;    
 
-#define buffersize 100
+#define buffersize 200
 
 // scale resolutions per LSB for the sensors
 static float aRes, gRes, mRes;
@@ -258,43 +258,6 @@ mpudriver::~mpudriver()
 {
 }
 
-
-int mpudriver::GetAccelStatus(void)
-{
-	return 1;
-}
-
-
-int mpudriver::GetMagStatus(void)
-{
-	return 1;
-}
-
-
-int mpudriver::GetGyrStatus(void)
-{
-	return 1;
-}
-
-
-int mpudriver::Get9250Info(INFO_9250* info)
-{
-	return 1;
-}
-
-
-int mpudriver::SetCalibration(MPU_CAL* cal)
-{
-	return 1;
-}
-
-
-int mpudriver::GetCalibration(MPU_CAL* cal)
-{
-	return 1;
-}
-
-
 imu::Vector<3> mpudriver::GetEuler(int* status)
 {
 	*status = 0;
@@ -338,7 +301,14 @@ float mpudriver::getPitch(void)
 
 float mpudriver::getHeading(void)
 {
-	return filter.getHeading_rad();
+	//return filter.getEuler().z();
+	float ret = 0.0f;
+	for (int i = 0; i < buffersize; i++)
+	{
+		ret  += yawbuffer[i];
+	}
+	ret /= buffersize;
+	return ret;
 }
 
 imu::Vector<3> mpudriver::GetAccelerometer(int*status)
@@ -474,9 +444,9 @@ void mpudriver::RunFilter(void)
 			//filter.getQuaternion(&quatW[quatIndex], &quatX[quatIndex], &quatY[quatIndex], &quatZ[quatIndex]);		
 		}
 		
-		rollbuffer[quatIndex] = filter.getRoll_rad();		
-		pitchbuffer[quatIndex] = filter.getPitch_rad(); 					
-		//yawbuffer[quatIndex] = filter.getHeading_rad();
+		rollbuffer[quatIndex] = filter.getEuler().x();		
+		pitchbuffer[quatIndex] = filter.getEuler().y(); 					
+		yawbuffer[quatIndex] = filter.getEuler().z();
 		accelbuffer[0][quatIndex] = mappedimudata[0][1];
 		accelbuffer[1][quatIndex] = mappedimudata[1][1];
 		accelbuffer[2][quatIndex] = mappedimudata[2][1];
@@ -524,7 +494,7 @@ void mpudriver::RunFilter(void)
 				   my,
 					mz,
 					//this is yaw1
-				   filter.quad);
+				   0);
 				//			printf("Wings Level, %d \n", filter.wingslevel);
 				//			printf("DMAG[2] = , %+2.4f \n", filter.dmag[2]);
 			}
@@ -549,7 +519,18 @@ void mpudriver::resetAlgorithm(void)
 	ax = ay = az = gx = gy = gz = mx = my = mz = 0;
 }
 
-bool mpudriver::getWingsLevel(void)
+AC_STATE mpudriver::getAcState(void)
 {
-	return filter.wingslevel;
+	return filter.acState;
+}
+
+
+void mpudriver::setSteerCard(int* steerto)
+{
+	filter.steerTable[0] = steerto[11]*M_PI / 180.0f;
+	for (int i = 0; i < 12; i++)
+	{
+		filter.steerTable[i + 1] = steerto[i]*M_PI / 180.0f;
+	}
+	
 }

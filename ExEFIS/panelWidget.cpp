@@ -118,7 +118,7 @@ void panelWidget::onTimer(void)
 	vi1->setValue(data.airspeed);
 	vi2->setValue(data.altitude);
 	ss->setValue(data.slip);	
-	r->setWingsLevel(adhr->getWingsLevel());
+	r->setWingsLevel(adhr->getAcState().wingslevel);
 /*
 	if (sw->value == 0) r1->setValue(0);
 	else
@@ -137,14 +137,16 @@ void panelWidget::onTimer(void)
 		
 		if (mw->value == 5)
 		{
+			AC_STATE s = adhr->getAcState();
 			mw->setStatus(5,
-			"Pitch: " + QString::number(data.pitch, 'f', 2) + " Roll: " + QString::number(data.roll, 'f', 2) + "\r" + "\n" +
-			"SS: " + QString::number(data.slip, 'f', 2) + " Hdg: " + QString::number(data.heading, 'f', 2));   // " Pres: " + QString::number(adhrdata[0], 'g', 4);
+				"WL: " + QString::number(s.wingslevel, 'd', 1) + " PL: " + QString::number(s.pitchlevel, 'd', 1) + " PS: " + QString::number(s.pitchstill, 'd', 1) + "\r" + "\n" +
+			"Tur: " + QString::number(s.turning, 'd', 1) + " BC: " + QString::number(s.ballcentered, 'd', 1) + " OneG: " + QString::number(s.oneG, 'd', 1));      // " Pres: " + QString::number(adhrdata[0], 'g', 4);
 		}
 		if (mw->value == 4)
 		{
 			//this used to update VSI
 			//mw->setStatus(4, "VSI:  " +  QString::number(vsival, 'f', 0));
+			mw->setStatus(4, " DG: " + QString::number(data.heading, 'd', 1) + " VSI: " + QString::number(data.vsi, 'd', 1));
 		}
 		
 	}	
@@ -269,6 +271,7 @@ void panelWidget::setADHRS(adhrs* a)
 	//Init the adhrs when we're ready, if you do this before, you wind up with a
 	//strange almost "multithreaded" application for a bit...
 	adhr->setAltimeterSetting(settings.altimeterSetting, vi2->settingPrec);
+	adhr->setSteerToSettings(settings.steerCard);
 	adhr->Init();
 }
 

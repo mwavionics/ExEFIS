@@ -67,7 +67,14 @@ SKFilter::SKFilter()
 	gyroHeading = 0;
 	_initCounter = 0;
 	_initialized = false;
-	wingslevel = false;
+	
+	acState.wingslevel = false;
+	acState.pitchlevel = false;
+	acState.pitchstill = false;
+	acState.turning = false;
+	acState.ballcentered = false;
+	acState.oneG = false;
+	
 	magbufferindex = 0;
 }
 
@@ -265,32 +272,47 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				float zmag = mz_ / mag_norm;
 				
 				//Adjust for bank angle and pitch
-				float Roll = 0; //_Euler[0];
-				float Pitch = 0; //_Euler[1];
-				float Yaw = 0; //_Euler[2];
+				float Roll = _Euler[0];
+				float Pitch = _Euler[1];
+				float Yaw = _Euler[2];
 				
-#if 0			//Note that these lines are placeholders - we can do better with the magnetometer I think...	
+		//Note that these lines are placeholders - we can do better with the magnetometer I think...	
 				float rollmag = atan2((-ymag*cos(Pitch) + xmag*sin(Pitch)), (zmag*cos(Yaw) + ymag*sin(Yaw)*sin(Pitch) + xmag*sin(Yaw)*cos(Pitch))); 
-				_magEuler[0] = constrainAngle180(rollmag - M_PI);  //need to offset this by pi
+			//	_magEuler[0] = constrainAngle180(rollmag - M_PI);  //need to offset this by pi
 			//	Roll = _magEuler[0];
 				
 				float pitchmag = -atan2((-xmag*cos(Yaw) + ymag*sin(Yaw)), (zmag*cos(Roll) + xmag*sin(Roll)*sin(Yaw) + ymag*sin(Roll)*cos(Yaw))); 
-				_magEuler[1] = constrainAngle180(pitchmag - M_PI);  //need to offset this by pi
+			//	_magEuler[1] = constrainAngle180(pitchmag - M_PI);  //need to offset this by pi
 			//	Pitch = _magEuler[1];
 				
-				float yawmag = -atan2((-ymag*cos(Roll) + zmag*sin(Roll)), (xmag*cos(Pitch) + ymag*sin(Pitch)*sin(Roll) + zmag*sin(Pitch)*cos(Roll))); 
-				_magEuler[2] = constrainAngle360(yawmag);
-#endif				
-				float rollmag = atan2((-ymag), (zmag)); 
+				float yawmag = -atan2((-zmag*cos(Roll) + xmag*sin(Roll)), (xmag*cos(Pitch) - zmag*sin(Pitch)*sin(Roll) + ymag*sin(Pitch)*cos(Roll))); 
+			//	_magEuler[2] = constrainAngle360(yawmag);
+			
+				
+				//float rollmag = atan2((-ymag), (zmag)); 
 				_magEuler[0] = constrainAngle180(rollmag - M_PI);   //need to offset this by pi
 			//	Roll = _magEuler[0];
 				
-				float pitchmag = -atan2((-xmag ), (ymag)); 
+			//	float pitchmag = -atan2((-xmag ), (ymag)); 
 				_magEuler[1] = constrainAngle180(pitchmag - M_PI);   //need to offset this by pi
 			//	Pitch = _magEuler[1];
 				
-				float yawmag = -atan2((-zmag), (xmag)); 
-				_magEuler[2] = constrainAngle360(yawmag);
+			//	float yawmag = -atan2((-zmag), (xmag)); 
+			
+				//  Need to correct these for bank angle
+			
+				float steer =  constrainAngle360(yawmag);
+				//_magEuler[2] = constrainAngle360(yawmag);
+				int i = 1;
+				bool found = false;
+				for (i = 1; i < 13 && !found; i++)
+				{
+					if (steer < steerTable[i]) found = true;
+				}
+				
+				float ratio = (steer - steerTable[i - 1]) / (steerTable[i] - steerTable[i - 1]);
+				_magEuler[2] = (abs(forSteerTable[i] - forSteerTable[i - 1])* ratio) + forSteerTable[i - 1];
+				_magEuler[2] = constrainAngle360(yawmag);//_magEuler[2]);
 								
 				dmagbuffer[0][magbufferindex] = (_magEuler[0] - magPrev[0]) / _dt ;
 				dmagbuffer[1][magbufferindex] = (_magEuler[1] - magPrev[1]) / _dt ;
@@ -379,6 +401,7 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			//then we can assume pitch angle from accelerometer... 
 			float pitchmag = -1.0f;
 			float rollmag = -1.0f;
+			float totalmag = -1.0f;
 			if(accelUpdated_)
 			{
 				_accelEuler[0] = atan(-ay_ / az_);
@@ -387,12 +410,13 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				
 				pitchmag = sqrt((ax_*ax_) + (az_*az_));
 				rollmag = sqrt((ay_*ay_) + (az_*az_));
-
+				totalmag = sqrt((ax_*ax_) + (az_*az_) + (ay_*ay_));
+				
 				axisstill.accelroll = (abs(_accelEuler[0] - accelPrev[0]) < 0.01f); 
 				axisstill.accelpitch = (abs(_accelEuler[1] - accelPrev[1]) < 0.01f); 
 				axisstill.accelyaw = (abs(_accelEuler[2] - accelPrev[2]) < 0.01f); 
 				
-				ballcentered = abs(ay_) < 0.07f ? true : false;
+				
 				
 				
 				//_Euler[0] = constrainAngle360(_Euler[0]);
@@ -403,10 +427,17 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				//accelPrev[2] = _accelEuler[2];
 			}
 			
-			wingslevel = (axisstill.magyaw && axisstill.gyroyaw && ballcentered);
-			pitchlevel = (abs(1.0f - pitchmag) < 0.02) && _accelEuler[1] < 0.02 && (abs(ax_) < 0.02) && axisstill.magpitch && axisstill.accelpitch;
 			
-			if (pitchlevel)
+			
+			acState.ballcentered = abs(ay_) < 0.07f ? true : false;
+			acState.pitchstill = axisstill.accelpitch && axisstill.magpitch && axisstill.gyropitch ? true : false;
+			acState.turning = !axisstill.gyroyaw || !axisstill.magyaw;
+			acState.wingslevel = (!acState.turning && acState.ballcentered);
+			acState.oneG = (abs(1.0f - totalmag) <= 0.012f);
+			acState.pitchlevel = acState.oneG && acState.pitchstill && abs(_accelEuler[1]) < 0.01 && !acState.turning;
+			
+			
+			if (acState.pitchlevel)
 			{					
 				if (_Euler[1] > 0)_Euler_Fixed[1] -= 0.05f * _dt;        //move at 0.1 rad / s
 				else _Euler_Fixed[1] += 0.05f * _dt;
@@ -416,30 +447,30 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			float fm[3] = { 0.0f, 0.0f, 0.0f };
 			float fa[3] = { 0.0f, 0.0f, 0.0f };
 
-			if (pitchlevel)
+			if (acState.pitchlevel)
 			{
 				fg[1] = 0.0f;
 				fa[1] = 1.0f;
 			}
-			
-			if (axisstill.accelpitch && axisstill.magpitch && axisstill.gyropitch)
+			//Think about a slow level turn
+			if (acState.oneG && acState.pitchstill)
 			{
-				fg[1] = 0.0f;
-				fa[1] = 1.0f;
+				//fg[1] = 0.0f;
+				//fa[1] = 1.0f;
 			}
 			
-			if ((abs(1.0f - rollmag) < 0.02f) && axisstill.gyroyaw && axisstill.magyaw)
+			if (!acState.turning && acState.oneG)
 			{
 				fg[0] = 0.0f;
 				fa[0] = 1.0f;
 			}
 			
-			if (wingslevel)
+			if (acState.wingslevel)
 			{
 				fg[0] = 0.0f;
 				fa[0] = 1.0f;
-				fg[2] = 0.0f;
-				fm[2] = 1.0f;
+				//fg[2] = 0.2f;
+				//fm[2] = 0.8f;
 			}
 
 			
@@ -448,29 +479,9 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			_Euler[0] = (fg[0]*_gyroEuler[0]) + (fm[0]*_magEuler[0]) + (fa[0]*_accelEuler[0]); //+ _Euler_Fixed[0];
 			_Euler[1] = (fg[1]*_gyroEuler[1]) + (fm[1]*_magEuler[1]) + (fa[1]*_accelEuler[1]); //+ _Euler_Fixed[1];
 			_Euler[2] = (fg[2]*_gyroEuler[2]) + (fm[2]*_magEuler[2]) + (fa[2]*_accelEuler[2]);// + _Euler_Fixed[2];
-				
+						
 		}
 	}	
-}
-
-/* Returns the roll angle, rad */
-float SKFilter::getRoll_rad() {
-	return _Euler.x();
-}
-
-/* Returns the pitch angle, rad */
-float SKFilter::getPitch_rad() {
-	return _Euler.y();
-}
-
-/* Returns the yaw angle, rad */
-float SKFilter::getYaw_rad() {
-	return constrainAngle180(_Euler.z());
-}
-
-/* Returns the heading angle, rad */
-float SKFilter::getHeading_rad() {
-	return _Euler.z();//constrainAngle360(_Euler.z());
 }
 
 /* Returns the full 3dof vector*/

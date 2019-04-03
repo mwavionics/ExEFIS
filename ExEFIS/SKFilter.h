@@ -1,6 +1,7 @@
 #pragma once
 #include "Vector.h"
 #include <sys/time.h>
+#include <math.h>
 
 typedef struct 
 {
@@ -15,6 +16,16 @@ typedef struct
 	bool accelroll;
 } AXIS_STILL;
 
+typedef struct
+{
+	bool wingslevel;
+	bool pitchlevel;
+	bool pitchstill;
+	bool turning;
+	bool ballcentered;
+	bool oneG;
+} AC_STATE;
+
 class SKFilter
 {
 	
@@ -24,17 +35,14 @@ class SKFilter
 	void setInitializationDuration(int duration);
 	bool validate(float gx, float gy, float gz, float ax, float ay, float az, float hx, float hy, float hz);
 	bool update(float gx, float gy, float gz, float ax, float ay, float az, float hx, float hy, float hz);
-	float getRoll_rad();
-	float getPitch_rad();
-	float getYaw_rad();
-	float getHeading_rad();
-	int quad = 0;
-	imu::Vector<3> getEuler(void);
-	bool wingslevel;
-	bool ballcentered;
-	bool pitchlevel;
+
+	imu::Vector<3> getEuler(void);	
+	AC_STATE acState;
 	imu::Vector<3> dmag;	
 	AXIS_STILL axisstill;
+	//	
+	float forSteerTable[13] = {0.0f, M_PI / 6, M_PI / 3, M_PI / 2, 2*M_PI / 3, 5*M_PI / 6, M_PI, 7*M_PI / 6, 4*M_PI / 3, 3*M_PI / 2, 5*M_PI / 3, 11*M_PI / 6, 2*M_PI };
+	float steerTable[13] = {0.0f, M_PI / 6, M_PI / 3, M_PI / 2, 2*M_PI / 3, 5*M_PI / 6, M_PI, 7*M_PI / 6, 4*M_PI / 3, 3*M_PI / 2, 5*M_PI / 3, 11*M_PI / 6, 2*M_PI };
 	
 private:
 	bool _initialized = false;

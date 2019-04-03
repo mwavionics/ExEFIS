@@ -3,6 +3,7 @@
 #include "Vector.h"
 #include "PiTransfer.h"
 #include "MPU9250.h"
+#include "SKFilter.h"
 
 struct MPU_CAL
 {
@@ -34,38 +35,19 @@ public:
 	mpudriver(float* ppGyroBias, float* ppAccelBias, float* ppMagBias, float* ppMagScale, float* ppAxisRemap);
 	~mpudriver();
 	int Init(bool doSelfTest, bool doCalibration, bool doMagCalibration, bool _showmagvectors);
-	int GetAccelStatus(void);
-	int GetMagStatus(void);
-	int GetGyrStatus(void);
-	int Get9250Info(INFO_9250* info);
-	int SetCalibration(MPU_CAL* cal);
-	int GetCalibration(MPU_CAL* cal);
+	
+	void setSteerCard(int* steerto);
+	
 	imu::Vector<3> GetEuler(int* status);
 	imu::Vector<3> GetAccelerometer(int*status);
+	
 	float GetYAccelFiltered(int* status);
 	float getRoll(void);
 	float getPitch(void);
 	float getHeading(void);
-	bool getWingsLevel(void);	
-	/* Returns the roll angle, rad */
-//	float getRoll_rad() {
-//		return filter.getRoll_rad();
-//	}
-//
-//	/* Returns the pitch angle, rad */
-//	float getPitch_rad() {
-//		return filter.getRoll_rad();
-//	}
-//
-//	/* Returns the yaw angle, rad */
-//	float getYaw_rad() {
-//		return getYaw_rad() ;
-//	}
-//
-//	/* Returns the heading angle, rad */
-//	float getHeading_rad() {
-//		return filter.getHeading_rad();
-//	}
+	
+	AC_STATE getAcState(void);
+	
 	void resetAlgorithm (void);
 	
 	static void RunFilter(void);

@@ -5,6 +5,7 @@
 
 #include "mpudriver.h"
 #include "hsc_pressure.h"
+#include "SKFilter.h"
 
 //Defines for validity checks on the calibraitons
 #define GYRO_POS_VALID 100.0f
@@ -20,15 +21,29 @@
 #define PRESSURE_MAX_VALID 30.0f
 #define PRESSURE_MIN_VALID -30.0f
 
+//Define the buffer size for the altimeter and VSI
+#define ALTBUFFERSIZE 50
+#define VSIBUFFERSIZE 50
+
+
 typedef struct
 {
 	float altitude;
+	float vsi;
 	float airspeed;
 	float heading;
 	float roll;
 	float pitch;
 	float slip;
 }AHRS_DATA;
+
+typedef struct
+{
+	float speed;
+	float altitude;
+	int seconds;
+	int useconds;
+}AIR_DATAPOINT;
 
 typedef struct
 {
@@ -66,9 +81,9 @@ public:
 
 	int getDataSet(AHRS_DATA* data);
 	void getCalibration(AHRS_CAL* cal);
-	bool getWingsLevel(void);	
+	AC_STATE getAcState(void);		
 	void setAltimeterSetting(int setting, int settingPrec);
-		
+	void setSteerToSettings(int* steerto);
 	static AHRS_CAL* processCalibrationFile(QFile* file);
 
 	
@@ -85,6 +100,10 @@ private:
 	static void default_calibration(AHRS_CAL* cal);
 	static void calfile_process_line(QByteArray &line);
 	static bool calfile_validate( void );
+	
+	AIR_DATAPOINT altbuffer[ALTBUFFERSIZE];	
+	int altbufferindex;
+	//int vsibufferindex;
 	
 	
 };

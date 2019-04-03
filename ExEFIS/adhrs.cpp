@@ -16,6 +16,7 @@
 
 static AHRS_CAL cal;
 static AHRS_CAL defaultcal;
+//float vsibuffer[VSIBUFFERSIZE];
 /**********************************************************************************************//**
 * Module: adhrs::adhrs
 ***************************************************************************************************
@@ -40,6 +41,17 @@ adhrs::adhrs(AHRS_CAL* pCalibration, bool domagtest, bool showmagvectors)
 	performMagTest = domagtest;
 	showMagVectors = showmagvectors;
 	
+	float alt = altitude::getAltitudeFt(staticpress->getPressure(), 29.92);
+	
+	for (int i = 0; i < ALTBUFFERSIZE; i++)
+	{
+		altbuffer[i].altitude = alt;
+		altbuffer[i].speed = 0.0f;
+	//	vsibuffer[i] = 0.0f;
+	}
+	
+	altbufferindex = 0;
+	//vsibufferindex = 0;
 
 }
 
@@ -86,7 +98,41 @@ int adhrs::getDataSet(AHRS_DATA* data)
 		error = 0;
 		if (!error)
 		{	
+			/*
+			float aa = altbuffer[altbufferindex].altitude = altitude::getAltitudeFt(staticpress->getPressure(), altimeterSetting);
+			float ss = altbuffer[altbufferindex].speed = airspeed::getIASMph(airspeed->getPressure());
+			timeval tp;
+			int v = gettimeofday(&tp, NULL);
+			altbuffer[altbufferindex].seconds = tp.tv_sec;
+			altbuffer[altbufferindex].useconds = tp.tv_usec;
+			altbufferindex++; 
+			
+			if (altbufferindex > ALTBUFFERSIZE) altbufferindex = 0;
+			
+			float vsi = 0;
+			for (int i = 0; i < ALTBUFFERSIZE; i++)
+			{			
+				if (i > 0)
+				{
+					int secs = altbuffer[i].seconds - altbuffer[i-1].seconds;
+					float _dt = secs * 1000000.0f + (altbuffer[i].useconds - altbuffer[i - 1].useconds);
+					_dt /= 60000000.0f;	//calc dt in minutes					
+					vsi += ((altbuffer[i].altitude - altbuffer[i - 1].altitude) / _dt); 
+				}
+			}
+	
+			vsibuffer[vsibufferindex] = (vsi / (ALTBUFFERSIZE - 1));	
+			vsibufferindex++;
+			if (vsibufferindex > VSIBUFFERSIZE) vsibufferindex = 0;
+			vsi = 0;
+			for (int i = 0; i < VSIBUFFERSIZE; i++)
+			{
+				vsi += vsibuffer[i];
+			}
+			
+			*/
 			data->altitude = altitude::getAltitudeFt(staticpress->getPressure(), altimeterSetting);
+			data->vsi = 0;//vsi / (VSIBUFFERSIZE);
 			data->airspeed = airspeed::getIASMph(airspeed->getPressure());
 			data->heading = hrs->getHeading() * (180.0f / M_PI);
 			data->roll = hrs->getRoll() * (180.0f / M_PI);
@@ -106,10 +152,11 @@ int adhrs::getDataSet(AHRS_DATA* data)
 	return status;
 }
 
-bool adhrs::getWingsLevel(void)
+AC_STATE adhrs::getAcState(void)
 {
-	return hrs->getWingsLevel();
+	return hrs->getAcState();
 }
+
 
 void adhrs::getCalibration(AHRS_CAL* calibration)
 {	
@@ -476,4 +523,11 @@ void adhrs::default_calibration(AHRS_CAL* cal)
 	cal->staticPressMax = 15.0f;
 	cal->staticPressMin = 0.0f;
 
+}
+
+
+
+void adhrs::setSteerToSettings(int* steerto)
+{
+	hrs->setSteerCard(steerto);
 }

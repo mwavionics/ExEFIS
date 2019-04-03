@@ -399,6 +399,7 @@ Debug/moc_panelWidget.cpp: horizon_instrument.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		SKFilter.h \
 		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h \
@@ -422,6 +423,7 @@ Debug/moc_SplashWidget.cpp: adhrs.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		SKFilter.h \
 		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h \
@@ -441,6 +443,7 @@ Debug/moc_DiagWidget.cpp: adhrs.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		SKFilter.h \
 		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h \
@@ -470,6 +473,7 @@ Debug/adhrs.o: adhrs.cpp adhrs.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		SKFilter.h \
 		hsc_pressure.h \
 		airspeed.h \
 		altitude.h
@@ -496,6 +500,7 @@ Debug/ExEFIS.o: ExEFIS.cpp SplashWidget.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		SKFilter.h \
 		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h \
@@ -521,8 +526,8 @@ Debug/mpudriver.o: mpudriver.cpp mpudriver.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
-		quaternionFilters.h \
-		SKFilter.h
+		SKFilter.h \
+		quaternionFilters.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o Debug/mpudriver.o mpudriver.cpp
 
 Debug/hsc_pressure.o: hsc_pressure.cpp hsc_pressure.h
@@ -541,6 +546,7 @@ Debug/DiagWidget.o: DiagWidget.cpp DiagWidget.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		SKFilter.h \
 		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h
@@ -570,6 +576,7 @@ Debug/panelWidget.o: panelWidget.cpp panelWidget.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		SKFilter.h \
 		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h \
@@ -605,6 +612,7 @@ Debug/SplashWidget.o: SplashWidget.cpp SplashWidget.h \
 		PiTransfer.h \
 		ByteTransfer.h \
 		MPU9250.h \
+		SKFilter.h \
 		hsc_pressure.h \
 		knobs.h \
 		RotaryEncoder.h \
