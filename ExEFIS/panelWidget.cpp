@@ -60,6 +60,8 @@ panelWidget::panelWidget(QWidget *parent, QFile* f, knobs *k)
 	dg = new directional_gyro(this);
 	dg->value = 7;
 	r = new reticle(this);
+	r->setSetting(settings.horizonOffset);
+	h1->setVerticalOffset(r->setting);
 	
 	sw = new StatusWidget(this);
 	mw = new MenuWidget(this);
@@ -181,12 +183,14 @@ void panelWidget::onTimer(void)
 			r->toggleEditMode();
 			r->setSetting(h1->verticalOffset);
 			knob->right->setValue(r->setting);
+			adhr->setAttitudeOffset(r->setting);
 		}
 		if (mode == 6)
 		{
 			r->toggleEditMode();
 			h1->setVerticalOffset(r->setting);
 			settings.horizonOffset = r->setting;
+			adhr->setAttitudeOffset(r->setting);
 			saveSettingsFile();
 		}
 		//Show the menu
@@ -272,6 +276,7 @@ void panelWidget::setADHRS(adhrs* a)
 	//strange almost "multithreaded" application for a bit...
 	adhr->setAltimeterSetting(settings.altimeterSetting, vi2->settingPrec);
 	adhr->setSteerToSettings(settings.steerCard);
+	adhr->setAttitudeOffset(r->setting);
 	adhr->Init();
 }
 
@@ -296,7 +301,7 @@ void panelWidget::onDebugTimer(void)
 	unsigned char offsets[22];
 	char caldata[4];
 	AHRS_DATA data;
-	int status = adhr->getDataSet(&data);
+//	int status = adhr->getDataSet(&data);
 	
 	printf("!!! Orientation !!!");
 	printf("Pitch %3.2f", data.pitch);

@@ -31,8 +31,8 @@ public :
 	void setSetting(int arg1)
 	{
 		int tempsetting = arg1;
-		while (tempsetting > 360) tempsetting -= 360;
-		while (tempsetting < 0) tempsetting += 360;
+		if (tempsetting > 20)tempsetting = 20;
+		if (tempsetting < -20) tempsetting = -20;		
 		setting = tempsetting;
 	}
 	

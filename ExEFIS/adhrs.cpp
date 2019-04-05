@@ -16,7 +16,10 @@
 
 static AHRS_CAL cal;
 static AHRS_CAL defaultcal;
-//float vsibuffer[VSIBUFFERSIZE];
+static AIR_DATAPOINT airDataBuffer[AIRDATABUFFERSIZE];
+static float vsiBuffer[VSIDATABUFFERSIZE];
+static int airDataBufferIndex;
+static int vsiDataBufferIndex;
 /**********************************************************************************************//**
 * Module: adhrs::adhrs
 ***************************************************************************************************
@@ -40,19 +43,8 @@ adhrs::adhrs(AHRS_CAL* pCalibration, bool domagtest, bool showmagvectors)
 		pCalibration->magBias, pCalibration->magScale, pCalibration->axisremap);				
 	performMagTest = domagtest;
 	showMagVectors = showmagvectors;
-	
-	float alt = altitude::getAltitudeFt(staticpress->getPressure(), 29.92);
-	
-	for (int i = 0; i < ALTBUFFERSIZE; i++)
-	{
-		altbuffer[i].altitude = alt;
-		altbuffer[i].speed = 0.0f;
-	//	vsibuffer[i] = 0.0f;
-	}
-	
-	altbufferindex = 0;
-	//vsibufferindex = 0;
-
+	airDataBufferIndex = 0;
+	vsiDataBufferIndex = 0;
 }
 
 void adhrs::Init(void)
@@ -97,43 +89,11 @@ int adhrs::getDataSet(AHRS_DATA* data)
 	{		
 		error = 0;
 		if (!error)
-		{	
-			/*
-			float aa = altbuffer[altbufferindex].altitude = altitude::getAltitudeFt(staticpress->getPressure(), altimeterSetting);
-			float ss = altbuffer[altbufferindex].speed = airspeed::getIASMph(airspeed->getPressure());
-			timeval tp;
-			int v = gettimeofday(&tp, NULL);
-			altbuffer[altbufferindex].seconds = tp.tv_sec;
-			altbuffer[altbufferindex].useconds = tp.tv_usec;
-			altbufferindex++; 
-			
-			if (altbufferindex > ALTBUFFERSIZE) altbufferindex = 0;
-			
-			float vsi = 0;
-			for (int i = 0; i < ALTBUFFERSIZE; i++)
-			{			
-				if (i > 0)
-				{
-					int secs = altbuffer[i].seconds - altbuffer[i-1].seconds;
-					float _dt = secs * 1000000.0f + (altbuffer[i].useconds - altbuffer[i - 1].useconds);
-					_dt /= 60000000.0f;	//calc dt in minutes					
-					vsi += ((altbuffer[i].altitude - altbuffer[i - 1].altitude) / _dt); 
-				}
-			}
-	
-			vsibuffer[vsibufferindex] = (vsi / (ALTBUFFERSIZE - 1));	
-			vsibufferindex++;
-			if (vsibufferindex > VSIBUFFERSIZE) vsibufferindex = 0;
-			vsi = 0;
-			for (int i = 0; i < VSIBUFFERSIZE; i++)
-			{
-				vsi += vsibuffer[i];
-			}
-			
-			*/
-			data->altitude = altitude::getAltitudeFt(staticpress->getPressure(), altimeterSetting);
-			data->vsi = 0;//vsi / (VSIBUFFERSIZE);
-			data->airspeed = airspeed::getIASMph(airspeed->getPressure());
+		{				
+			AIR_DATAPOINT point = adhrs::processAirData(staticpress->getPressure(), airspeed->getPressure(), altimeterSetting);
+			data->altitude = point.altitude;
+			data->vsi = adhrs::processVSI();
+			data->airspeed = point.speed;
 			data->heading = hrs->getHeading() * (180.0f / M_PI);
 			data->roll = hrs->getRoll() * (180.0f / M_PI);
 			data->pitch = hrs->getPitch() * (180.0f / M_PI);
@@ -530,4 +490,72 @@ void adhrs::default_calibration(AHRS_CAL* cal)
 void adhrs::setSteerToSettings(int* steerto)
 {
 	hrs->setSteerCard(steerto);
+}
+
+
+void adhrs::setAttitudeOffset(int offset_deg)
+{
+	hrs->setAttitudeOffset((float)(offset_deg*M_PI/180.0f));
+}
+
+
+AIR_DATAPOINT adhrs::processAirData(float pStatic, float pPitot, float altSetting)
+{
+	AIR_DATAPOINT point;
+	
+	timeval tp;
+	int v = gettimeofday(&tp, NULL);	
+	
+	int airDataBufferIndexPrev = (airDataBufferIndex - 1) >= 0 ? airDataBufferIndex - 1 : AIRDATABUFFERSIZE;
+	
+	
+	airDataBuffer[airDataBufferIndex].altitude = altitude::getAltitudeFt(pStatic, altSetting);
+	airDataBuffer[airDataBufferIndex].speed = airspeed::getIASMph(pPitot);
+	airDataBuffer[airDataBufferIndex].seconds = tp.tv_sec;
+	airDataBuffer[airDataBufferIndex].useconds = tp.tv_usec;
+	
+	int secs = airDataBuffer[airDataBufferIndex].seconds - airDataBuffer[airDataBufferIndexPrev].seconds;
+	float _dt = secs * 1000000.0f + (airDataBuffer[airDataBufferIndex].useconds - airDataBuffer[airDataBufferIndexPrev].useconds);
+	_dt /= 60000000.0f;	
+		
+	float altdiff = airDataBuffer[airDataBufferIndex].altitude - airDataBuffer[airDataBufferIndexPrev].altitude;
+		
+	airDataBuffer[airDataBufferIndex].vsi = (altdiff / _dt);		
+	
+	
+	point.altitude = airDataBuffer[airDataBufferIndex].altitude;
+	point.speed = airDataBuffer[airDataBufferIndex].speed;	
+	
+	airDataBufferIndex++;
+	if (airDataBufferIndex >= AIRDATABUFFERSIZE) {
+		airDataBufferIndex = 0;
+	}
+	
+	return point;
+}
+
+
+float adhrs::processVSI(void)
+{
+	float vsi = 0;
+	for (int i = 0; i < AIRDATABUFFERSIZE; i++)
+	{
+		vsi += airDataBuffer[i].vsi;
+	}
+	
+	vsi /= (AIRDATABUFFERSIZE);
+	
+	vsiBuffer[vsiDataBufferIndex] = vsi;
+	
+	vsiDataBufferIndex++;
+	if (vsiDataBufferIndex >= VSIDATABUFFERSIZE) vsiDataBufferIndex = 0;
+	
+	vsi = 0;
+	for (int i = 0; i < VSIDATABUFFERSIZE; i++)
+	{
+		vsi += vsiBuffer[i];
+	}
+	vsi /= VSIDATABUFFERSIZE;
+		
+	return vsi;
 }

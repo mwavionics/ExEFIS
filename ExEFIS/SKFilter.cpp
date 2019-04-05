@@ -30,6 +30,8 @@ SKFilter::SKFilter()
 {
 	valid = false;
 	
+	attitudeOffset = 0;
+	
 	//Bank, Pitch and Yaw
 	_Euler[0] = 0;
 	_Euler[1] = 0;
@@ -434,7 +436,7 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			acState.turning = !axisstill.gyroyaw || !axisstill.magyaw;
 			acState.wingslevel = (!acState.turning && acState.ballcentered);
 			acState.oneG = (abs(1.0f - totalmag) <= 0.012f);
-			acState.pitchlevel = acState.oneG && acState.pitchstill && abs(_accelEuler[1]) < 0.01 && !acState.turning;
+			acState.pitchlevel = acState.oneG && acState.pitchstill && abs(_accelEuler[1] - attitudeOffset) < 0.02 && !acState.turning;
 			
 			
 			if (acState.pitchlevel)
@@ -453,10 +455,10 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				fa[1] = 1.0f;
 			}
 			//Think about a slow level turn
-			if (acState.oneG && acState.pitchstill)
+			if(acState.oneG && acState.pitchstill && acState.wingslevel)
 			{
-				//fg[1] = 0.0f;
-				//fa[1] = 1.0f;
+				fg[1] = 0.0f;
+				fa[1] = 1.0f;
 			}
 			
 			if (!acState.turning && acState.oneG)
@@ -505,3 +507,9 @@ float SKFilter::constrainAngle360(float dta) {
 	return dta;
 }
 
+
+
+void SKFilter::setAttitudeOffset(float offset_rads)
+{
+	attitudeOffset = offset_rads;
+}

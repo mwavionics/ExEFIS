@@ -534,3 +534,9 @@ void mpudriver::setSteerCard(int* steerto)
 	}
 	
 }
+
+
+void mpudriver::setAttitudeOffset(float offset_rad)
+{
+	filter.setAttitudeOffset(offset_rad);
+}

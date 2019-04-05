@@ -35,6 +35,8 @@ class SKFilter
 	void setInitializationDuration(int duration);
 	bool validate(float gx, float gy, float gz, float ax, float ay, float az, float hx, float hy, float hz);
 	bool update(float gx, float gy, float gz, float ax, float ay, float az, float hx, float hy, float hz);
+	
+	void setAttitudeOffset(float offset_rads);
 
 	imu::Vector<3> getEuler(void);	
 	AC_STATE acState;
@@ -67,6 +69,8 @@ private:
 	float dmx, dmy, dmz;
 	
 	bool gyroUpdated_, accelUpdated_, magUpdated_;
+	
+	float attitudeOffset;
 	
 	float constrainAngle180(float dta);
 	float constrainAngle360(float dta);

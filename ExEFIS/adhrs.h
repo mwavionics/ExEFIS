@@ -21,10 +21,8 @@
 #define PRESSURE_MAX_VALID 30.0f
 #define PRESSURE_MIN_VALID -30.0f
 
-//Define the buffer size for the altimeter and VSI
-#define ALTBUFFERSIZE 50
-#define VSIBUFFERSIZE 50
-
+#define AIRDATABUFFERSIZE 40
+#define VSIDATABUFFERSIZE 30
 
 typedef struct
 {
@@ -41,6 +39,7 @@ typedef struct
 {
 	float speed;
 	float altitude;
+	float vsi;
 	int seconds;
 	int useconds;
 }AIR_DATAPOINT;
@@ -84,7 +83,12 @@ public:
 	AC_STATE getAcState(void);		
 	void setAltimeterSetting(int setting, int settingPrec);
 	void setSteerToSettings(int* steerto);
+	void setAttitudeOffset(int offset_deg);
 	static AHRS_CAL* processCalibrationFile(QFile* file);
+	
+	static  AIR_DATAPOINT processAirData(float pStatic, float pPitot, float altSetting);
+	static float processVSI(void);
+	
 
 	
 	
@@ -101,9 +105,7 @@ private:
 	static void calfile_process_line(QByteArray &line);
 	static bool calfile_validate( void );
 	
-	AIR_DATAPOINT altbuffer[ALTBUFFERSIZE];	
-	int altbufferindex;
-	//int vsibufferindex;
+
 	
 	
 };

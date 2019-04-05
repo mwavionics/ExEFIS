@@ -37,6 +37,7 @@ public:
 	int Init(bool doSelfTest, bool doCalibration, bool doMagCalibration, bool _showmagvectors);
 	
 	void setSteerCard(int* steerto);
+	void setAttitudeOffset(float offset_rad);
 	
 	imu::Vector<3> GetEuler(int* status);
 	imu::Vector<3> GetAccelerometer(int*status);

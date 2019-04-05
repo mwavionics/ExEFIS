@@ -83,7 +83,7 @@ void DiagWidget::setKnobs(knobs *k)
 void DiagWidget::pollTimerExp(void)
 {	
 	AHRS_DATA data;
-	int status = adhr->getDataSet(&data);	
+//	int status = adhr->getDataSet(&data);	
 	
 	textEditadhrs->setText(
 		QString("Altitude") + '\r' + '\n' +
