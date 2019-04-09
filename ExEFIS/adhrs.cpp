@@ -495,7 +495,8 @@ void adhrs::setSteerToSettings(int* steerto)
 
 void adhrs::setAttitudeOffset(int offset_deg)
 {
-	hrs->setAttitudeOffset((float)(offset_deg*M_PI/180.0f));
+	//Note the negative here to account for the opposite of the level flag in the AHRS
+	hrs->setAttitudeOffset((float)(-offset_deg*M_PI/180.0f));
 }
 
 

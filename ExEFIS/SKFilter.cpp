@@ -436,7 +436,7 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			acState.turning = !axisstill.gyroyaw || !axisstill.magyaw;
 			acState.wingslevel = (!acState.turning && acState.ballcentered);
 			acState.oneG = (abs(1.0f - totalmag) <= 0.012f);
-			acState.pitchlevel = acState.oneG && acState.pitchstill && abs(_accelEuler[1] - attitudeOffset) < 0.02 && !acState.turning;
+			acState.pitchlevel = acState.oneG && acState.pitchstill && abs(_accelEuler[1] - attitudeOffset) < 0.05 && !acState.turning;
 			
 			
 			if (acState.pitchlevel)
