@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 	
 	/* Start some String outputs in case you are launching the app with loggint enabled */
 	qDebug("****************** LOG BEGINS HERE **************************");
-	qDebug("Version 5.4 - Added settings file and Attitude Adjust - added attitude offset for Filter ");
+	qDebug("Version 5.6 - Added VSI to vertical instruments ");
 	
 	system("cat /proc/cpuinfo | grep Serial | cut -d ' ' -f 2");
 	system("gpio mode 26 out");

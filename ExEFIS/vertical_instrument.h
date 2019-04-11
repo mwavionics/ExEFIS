@@ -13,6 +13,8 @@ public :
 	vertical_instrument(QWidget *parent, QColor c);
 	void setValue(int val);
 	int getValue(void);
+	void setSecondaryValue(int val);
+	int getSecondaryValue(void);
 	void setupInstrument(int* vals, int numVals);
 	void setSetting(float stg);
 	void setEditMode(bool emode);
@@ -24,6 +26,8 @@ public :
 	int setting = 0;
 	int settingPrec = 2;
 	bool showSetting = false;
+	bool showSecondary = true;
+	bool showSecondaryValue = true;
 	
 public slots :
 	void onBlinkTimer(void);
@@ -39,6 +43,8 @@ private:
 	
 	int vertical_divs = 4;
 	int value = 81;
+	int secondaryValue = 670;
+	int secondaryScale = 2000;
 	
 
 	

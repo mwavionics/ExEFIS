@@ -48,9 +48,9 @@ void vertical_instrument::setupInstrument(int* vals, int numVals)
 void vertical_instrument::paintEvent(QPaintEvent * /* event */)
 {	
 	/* Calculate the size of the rectangle for the whole instrument*/
-	int tall = height() * 0.8f;
+	int tall = height() * 0.9f;
 	int wide = width() * 0.8f;	
-	int y = height() * 0.1f;
+	int y = height() * 0.05f;
 	int x = width() * 0.1f;
 	/* This is the rectangle for the outline of the instrument*/
 	QRect rect(x, y, wide, tall);
@@ -60,6 +60,14 @@ void vertical_instrument::paintEvent(QPaintEvent * /* event */)
 	painter.setPen(penColor);
 	painter.setBrush(QColor::fromRgb(169, 169, 169, 100));
 	painter.drawRect(rect);
+	
+	if (showSecondary)
+	{		
+		float ratio = (float)secondaryValue / (float)secondaryScale;
+		QRect secondaryRect(x, (tall / 2) +y, wide, (-ratio * (tall / 2)));
+		painter.setBrush(QColor::fromRgb(98, 52, 94, 200));
+		painter.drawRect(secondaryRect);
+	}
 	
 	/* vert is the height of each rectangle for values*/
 	int vert = tall / vertical_divs / 2;
@@ -104,6 +112,10 @@ void vertical_instrument::paintEvent(QPaintEvent * /* event */)
 	QPoint bottomBRight(x + wide, y + tall);
 	QRect bottomRect(bottomTLeft, bottomBRight);
 	
+	QPoint topTLeft(x, y);
+	QPoint topBRight(x + wide, y + vert);
+	QRect topRect(topTLeft, topBRight);
+	
 	QFont font = painter.font();
 	font.setPointSize(tall/20);
 	font.setWeight(QFont::DemiBold);
@@ -132,6 +144,17 @@ void vertical_instrument::paintEvent(QPaintEvent * /* event */)
 		painter.drawRect(bottomRect);
 		painter.setPen(Qt::white);
 		painter.drawText(bottomRect, Qt::AlignCenter, QString::number(setting / pow(10, settingPrec), 'f', settingPrec));
+		pen.setWidth(1);
+	}
+	
+	if (showSecondaryValue)
+	{
+		int val = secondaryValue / 10.0f;
+		painter.setPen(Qt::black);
+		painter.setBrush(QColor::fromRgb(0, 0, 0, 150));
+		painter.drawRect(topRect);
+		painter.setPen(Qt::white);
+		painter.drawText(topRect, Qt::AlignCenter, QString::number(val*10, 'f', 0));
 		pen.setWidth(1);
 	}
 }
@@ -186,4 +209,10 @@ void vertical_instrument::toggleEditMode(void)
 int vertical_instrument::getValue(void)
 {
 	return (value);
+}
+
+
+void vertical_instrument::setSecondaryValue(int val)
+{
+	secondaryValue = val;	
 }

@@ -3,27 +3,31 @@
 #include <sys/time.h>
 #include <math.h>
 
+#define AXISSTILLACCELSCALAR 10000
+#define AXISSTILLMAGSCALAR 500
+#define AXISSTILLGYROSCALAR 600
+
 typedef struct 
 {
-	bool magpitch;
-	bool magyaw;
-	bool magroll;
-	bool gyropitch;
-	bool gyroyaw;
-	bool gyroroll;
-	bool accelpitch;
-	bool accelyaw;
-	bool accelroll;
+	int magpitch;
+	int magyaw;
+	int magroll;
+	int gyropitch;
+	int gyroyaw;
+	int gyroroll;
+	int accelpitch;
+	int accelyaw;
+	int accelroll;
 } AXIS_STILL;
 
 typedef struct
 {
-	bool wingslevel;
-	bool pitchlevel;
-	bool pitchstill;
-	bool turning;
-	bool ballcentered;
-	bool oneG;
+	float wingslevel;
+	float pitchlevel;
+	float pitchstill;
+	float turning;
+	float ballcentered;
+	float oneG;
 } AC_STATE;
 
 class SKFilter

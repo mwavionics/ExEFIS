@@ -48,6 +48,8 @@ panelWidget::panelWidget(QWidget *parent, QFile* f, knobs *k)
 	h1 = new horizon_instrument(this, e, s, settings.horizonOffset);
 	//r1 = new round_instrument(this);
 	vi1 = new vertical_instrument(this, Qt::black);
+	vi1->showSecondary = false;
+	vi1->showSecondaryValue = false;
 
 	int altvals[10] = { 0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000 };	
 	vi2 = new vertical_instrument(this, Qt::black);
@@ -119,6 +121,7 @@ void panelWidget::onTimer(void)
 	dg->value = data.heading;
 	vi1->setValue(data.airspeed);
 	vi2->setValue(data.altitude);
+	vi2->setSecondaryValue((int)data.vsi);
 	ss->setValue(data.slip);	
 	r->setWingsLevel(adhr->getAcState().wingslevel);
 /*

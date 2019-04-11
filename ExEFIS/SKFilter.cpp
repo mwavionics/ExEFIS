@@ -70,12 +70,12 @@ SKFilter::SKFilter()
 	_initCounter = 0;
 	_initialized = false;
 	
-	acState.wingslevel = false;
-	acState.pitchlevel = false;
-	acState.pitchstill = false;
-	acState.turning = false;
-	acState.ballcentered = false;
-	acState.oneG = false;
+	acState.wingslevel = 0;
+	acState.pitchlevel = 0;
+	acState.pitchstill = 0;
+	acState.turning = 0;
+	acState.ballcentered = 0;
+	acState.oneG = 0;
 	
 	magbufferindex = 0;
 }
@@ -335,9 +335,12 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				dmag[2] /= magbuffersize;
 				
 				//Set the axis still variables for initialization state
-				axisstill.magroll = (abs(dmag[0]) < 0.02f) ? true : false;
-				axisstill.magpitch = (abs(dmag[1]) < 0.02f) ? true : false;
-				axisstill.magyaw = (abs(dmag[2]) < 0.04f) ? true : false;				
+				axisstill.magroll = 100 - (abs(dmag[0])*AXISSTILLMAGSCALAR);
+				axisstill.magpitch = 100 - (abs(dmag[1])*AXISSTILLMAGSCALAR);
+				axisstill.magyaw = 100 - (abs(dmag[2])*AXISSTILLMAGSCALAR);
+				if (axisstill.magroll < 0)axisstill.magroll = 0;
+				if (axisstill.magpitch < 0)axisstill.magpitch = 0;
+				if (axisstill.magyaw < 0)axisstill.magyaw = 0;
 				
 				magPrev[0] = _magEuler[0];
 				magPrev[1] = _magEuler[1];
@@ -357,9 +360,12 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				integral[2] = ((gyroPrev[2] * _dt) + ((gzz - gyroPrev[2]) * 0.5f * _dt));
 				
 				//Set the axis still flags
-				axisstill.gyroroll = abs(integral[0]) < 0.05f ? true : false;
-				axisstill.gyropitch = abs(integral[1]) < 0.05f ? true : false;
-				axisstill.gyroyaw = abs(integral[2]) < 0.05f ? true : false;
+				axisstill.gyroroll = 100 - (abs(integral[0])*AXISSTILLGYROSCALAR);
+				axisstill.gyropitch = 100 - (abs(integral[1])*AXISSTILLGYROSCALAR);
+				axisstill.gyroyaw = 100 - (abs(integral[2])*AXISSTILLGYROSCALAR);
+				if (axisstill.gyroroll < 0) axisstill.gyroroll = 0;
+				if (axisstill.gyropitch < 0) axisstill.gyropitch = 0;
+				if (axisstill.gyroyaw < 0) axisstill.gyroyaw = 0;
 				
 				//First Calc Roll Angle
 				_gyroEuler[0] = _Euler[0] + integral[0];
@@ -408,18 +414,18 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			{
 				_accelEuler[0] = atan(-ay_ / az_);
 				_accelEuler[1] = atan(-ax_ / az_);				
-				//_accelEuler[2] = atan(ay / ax);
+				_accelEuler[2] = atan(-ay_ / ax_);
 				
 				pitchmag = sqrt((ax_*ax_) + (az_*az_));
 				rollmag = sqrt((ay_*ay_) + (az_*az_));
 				totalmag = sqrt((ax_*ax_) + (az_*az_) + (ay_*ay_));
 				
-				axisstill.accelroll = (abs(_accelEuler[0] - accelPrev[0]) < 0.01f); 
-				axisstill.accelpitch = (abs(_accelEuler[1] - accelPrev[1]) < 0.01f); 
-				axisstill.accelyaw = (abs(_accelEuler[2] - accelPrev[2]) < 0.01f); 
-				
-				
-				
+				axisstill.accelroll = 100 - (abs(_accelEuler[0] - accelPrev[0]) * AXISSTILLACCELSCALAR); 
+				axisstill.accelpitch = 100 - (abs(_accelEuler[1] - accelPrev[1]) * AXISSTILLACCELSCALAR); 
+				axisstill.accelyaw = 100 - (abs(_accelEuler[2] - accelPrev[2]) * AXISSTILLACCELSCALAR); 
+				if (axisstill.accelroll < 0)axisstill.accelroll = 0;
+				if (axisstill.accelpitch < 0)axisstill.accelpitch = 0;
+				if (axisstill.accelyaw < 0)axisstill.accelyaw = 0;
 				
 				//_Euler[0] = constrainAngle360(_Euler[0]);
 				//_Euler[1] = constrainAngle360(_Euler[1]);
@@ -429,14 +435,12 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				//accelPrev[2] = _accelEuler[2];
 			}
 			
-			
-			
-			acState.ballcentered = abs(ay_) < 0.07f ? true : false;
-			acState.pitchstill = axisstill.accelpitch && axisstill.magpitch && axisstill.gyropitch ? true : false;
-			acState.turning = !axisstill.gyroyaw || !axisstill.magyaw;
-			acState.wingslevel = (!acState.turning && acState.ballcentered);
-			acState.oneG = (abs(1.0f - totalmag) <= 0.012f);
-			acState.pitchlevel = acState.oneG && acState.pitchstill && abs(_accelEuler[1] - attitudeOffset) < 0.05 && !acState.turning;
+			acState.ballcentered = 1.0f - abs(ay_);// < 0.07f ? true : false;
+			acState.pitchstill = (axisstill.accelpitch * 0.0033f) + (axisstill.magpitch * 0.0033f) + (axisstill.gyropitch * 0.0033f);// ? true : false;
+			acState.turning = 1.0f - ((axisstill.gyroyaw * 0.005) + (axisstill.magyaw*0.005));
+			acState.wingslevel = (-acState.turning) + acState.ballcentered;			
+			acState.oneG = 1.0f - (abs(1.0f - totalmag));
+			acState.pitchlevel = (acState.oneG * 0.25) + (acState.pitchstill*  0.25) + (.25f - abs(_accelEuler[1] - attitudeOffset)) + (.25 - (.25f*acState.turning));
 			
 			
 			if (acState.pitchlevel)
@@ -448,33 +452,12 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 			float fg[3] = { 1.0f, 1.0f, 1.0f };
 			float fm[3] = { 0.0f, 0.0f, 0.0f };
 			float fa[3] = { 0.0f, 0.0f, 0.0f };
-
-			if (acState.pitchlevel)
-			{
-				fg[1] = 0.0f;
-				fa[1] = 1.0f;
-			}
-			//Think about a slow level turn
-			if(acState.oneG && acState.pitchstill && acState.wingslevel)
-			{
-				fg[1] = 0.0f;
-				fa[1] = 1.0f;
-			}
 			
-			if (!acState.turning && acState.oneG)
-			{
-				fg[0] = 0.0f;
-				fa[0] = 1.0f;
-			}
+			fg[1] = 1.0f - acState.pitchlevel;
+			fa[1] = acState.pitchlevel;
 			
-			if (acState.wingslevel)
-			{
-				fg[0] = 0.0f;
-				fa[0] = 1.0f;
-				//fg[2] = 0.2f;
-				//fm[2] = 0.8f;
-			}
-
+			fg[0] = 1.0f - (((1.0f - acState.turning) * 0.33f) + (acState.oneG * 0.33f) + (acState.wingslevel*0.33f));
+			fa[0] = (((1.0f - acState.turning) * 0.33f) + (acState.oneG * 0.33f) + (acState.wingslevel * 0.33f));
 			
 			//Don't need the "spring" with the fixed Euler with the current setup
 		
