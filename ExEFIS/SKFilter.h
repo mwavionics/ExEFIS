@@ -46,6 +46,9 @@ class SKFilter
 	AC_STATE acState;
 	imu::Vector<3> dmag;	
 	AXIS_STILL axisstill;
+	float Y_h;
+	float X_h;
+	float hdg;
 	//	
 	float forSteerTable[13] = {0.0f, M_PI / 6, M_PI / 3, M_PI / 2, 2*M_PI / 3, 5*M_PI / 6, M_PI, 7*M_PI / 6, 4*M_PI / 3, 3*M_PI / 2, 5*M_PI / 3, 11*M_PI / 6, 2*M_PI };
 	float steerTable[13] = {0.0f, M_PI / 6, M_PI / 3, M_PI / 2, 2*M_PI / 3, 5*M_PI / 6, M_PI, 7*M_PI / 6, 4*M_PI / 3, 3*M_PI / 2, 5*M_PI / 3, 11*M_PI / 6, 2*M_PI };
@@ -89,5 +92,7 @@ private:
 	imu::Vector<3> gyroPrev;
 	imu::Vector<3> magPrev;
 	imu::Vector<3> accelPrev;	
+	
+	imu::Vector<3> magOffset;
 };
 

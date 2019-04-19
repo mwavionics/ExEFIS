@@ -308,7 +308,7 @@ float mpudriver::getHeading(void)
 		ret  += yawbuffer[i];
 	}
 	ret /= buffersize;
-	return ret;
+	return euler.z();
 }
 
 imu::Vector<3> mpudriver::GetAccelerometer(int*status)
@@ -429,7 +429,7 @@ void mpudriver::RunFilter(void)
 		
 		if (filter.validate(mappedimudata[0][0], mappedimudata[1][0], mappedimudata[2][0], 
 				mappedimudata[0][1], mappedimudata[1][1], mappedimudata[2][1], 
-				mappedimudata[0][2], mappedimudata[1][2], mappedimudata[2][2]))
+				mappedimudata[0][2], mappedimudata[2][2], mappedimudata[1][2]))
 		{
 		
 			filter.update(mappedimudata[0][0],
@@ -439,14 +439,14 @@ void mpudriver::RunFilter(void)
 				mappedimudata[1][1],
 				mappedimudata[2][1], 
 				mappedimudata[0][2],
-				mappedimudata[1][2],
-				mappedimudata[2][2]);
+				mappedimudata[2][2],
+				mappedimudata[1][2]);
 			//filter.getQuaternion(&quatW[quatIndex], &quatX[quatIndex], &quatY[quatIndex], &quatZ[quatIndex]);		
 		}
-		
-		rollbuffer[quatIndex] = filter.getEuler().x();		
-		pitchbuffer[quatIndex] = filter.getEuler().y(); 					
-		yawbuffer[quatIndex] = filter.getEuler().z();
+		euler = filter.getEuler();
+		rollbuffer[quatIndex] = euler.x();		
+		pitchbuffer[quatIndex] = euler.y(); 					
+		yawbuffer[quatIndex] = euler.z();
 		accelbuffer[0][quatIndex] = mappedimudata[0][1];
 		accelbuffer[1][quatIndex] = mappedimudata[1][1];
 		accelbuffer[2][quatIndex] = mappedimudata[2][1];
@@ -454,31 +454,39 @@ void mpudriver::RunFilter(void)
 		quatIndex++;
 		if (quatIndex > buffersize) quatIndex = 0;
 		
-//		last = current;
-//				MadgwickQuaternionUpdate(az,
-//					ay,
-//					ax,
-//					gz*M_PI / 180.0f,
-//					gy*M_PI / 180.0f,
-//					gx*M_PI / 180.0f,
-//					-mz,
-//					my,
-//					mx);
-
-		
-//				MahonyQuaternionUpdate(ax, ay, az, gx*M_PI / 180.0f, gy*M_PI / 180.0f, gz*M_PI / 180.0f, mx, my, -mz);
+		//		last = current;
+		//				MadgwickQuaternionUpdate(az,
+		//					ay,
+		//					ax,
+		//					gz*M_PI / 180.0f,
+		//					gy*M_PI / 180.0f,
+		//					gx*M_PI / 180.0f,
+		//					-mz,
+		//					my,
+		//					mx);
+//		MahonyQuaternionUpdate(
+//			mappedimudata[0][1],
+//			mappedimudata[1][1],
+//			mappedimudata[2][1], 
+//			mappedimudata[0][0],
+//			mappedimudata[1][0],
+//			mappedimudata[2][0], 
+//			mappedimudata[0][2],
+//			mappedimudata[1][2],
+//			mappedimudata[2][2]);
+	//	MahonyQuaternionUpdate(ax, ay, az, gx*M_PI / 180.0f, gy*M_PI / 180.0f, gz*M_PI / 180.0f, mx, my, -mz);
 		
 		/* only print once per second*/
 		if (usec > 250000) {
 
 			usec = 0;
 			
-			if (!showmagvectors)
+			if (showmagvectors)
 			{			
 			
 				float qw, qx, qy, qz;
-			
-				euler = filter.getEuler();
+				
+
 				printf("Orientation:, %f, %f, %f, Accelerometer:, %d, %d, %d, Gyro: , %+2.2f, %+2.2f, %+2.2f, Mag:, %+3.3f, %+3.3f, %+3.3f, Quad: %d \n", 
 					euler.x() * 180.0f / M_PI,
 					euler.y() * 180.0f / M_PI,
@@ -495,11 +503,23 @@ void mpudriver::RunFilter(void)
 					mz,
 					//this is yaw1
 				   0);
+#if false
+				imu::Vector<3> mad = q.toEuler();
+				printf("Orientation SK:, %f, %f, %f, Orientation Madgwick:, %f, %f, %f, \n", 
+					euler.x() * 180.0f / M_PI,
+					euler.y() * 180.0f / M_PI,
+					euler.z() * 180.0f / M_PI, 
+					(mad.x() * 180.0f / M_PI) - 90.0f,
+					mad.y() * 180.0f / M_PI,
+					mad.z() * 180.0f / M_PI
+				);
+#endif
 				//			printf("Wings Level, %d \n", filter.wingslevel);
 				//			printf("DMAG[2] = , %+2.4f \n", filter.dmag[2]);
 			}
 			else
 			{
+#if false
 				float mag_norm = sqrt((mx*mx) + (my*my) + (mz*mz));
 				float xmag = mx / mag_norm;
 				float ymag = my / mag_norm;
@@ -508,6 +528,24 @@ void mpudriver::RunFilter(void)
 					mag_norm,
 					(-atan2((-zmag), (xmag))* (180.0f / M_PI))					
 					);
+#endif
+				float mag_norm = sqrt((mappedimudata[0][2] * mappedimudata[0][2]) +
+					(mappedimudata[1][2] * mappedimudata[1][2]) +
+					(mappedimudata[2][2] * mappedimudata[2][2]));
+				float xmag = mappedimudata[0][2] / mag_norm;
+				float ymag = -mappedimudata[2][2] / mag_norm;
+				float zmag =- mappedimudata[1][2] / mag_norm;
+				printf("MagVectors:, totalmag, %+2.3f,  Magnitudes: , %+2.2f, %+2.2f, %+2.2f, X_h: , %+2.2f, Y_h, %+2.2f, Hdg %+2.2f, Constrained: %+2.2f \n",
+					mag_norm,
+					xmag, 
+					ymag,
+					zmag,
+					filter.X_h,
+					filter.Y_h,
+					filter.hdg,
+					filter.getEuler().z()
+					);
+				
 			}
 
 		}

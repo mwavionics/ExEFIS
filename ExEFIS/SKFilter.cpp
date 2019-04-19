@@ -3,7 +3,7 @@
 #include "math.h"
 #include <QDebug>
 
-const int magbuffersize = 500;
+const int magbuffersize = 50;
 const int accelbuffersize = 50;
 const int eulerbuffersize = 100;
 static float magbuffer[3][magbuffersize];
@@ -65,6 +65,10 @@ SKFilter::SKFilter()
 	accelPrev[0] = 0;
 	accelPrev[1] = 0;
 	accelPrev[2] = 0;
+	
+	magOffset[0] = 0;
+	magOffset[1] = 0;
+	magOffset[2] = 0;
 	
 	gyroHeading = 0;
 	_initCounter = 0;
@@ -270,40 +274,47 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 
 				float mag_norm = sqrt((mx_*mx_) + (my_*my_) + (mz_*mz_));
 				float xmag = mx_ / mag_norm;
-				float ymag = my_ / mag_norm;
-				float zmag = mz_ / mag_norm;
+				float ymag = -my_ / mag_norm;
+				float zmag = -mz_ / mag_norm;
 				
 				//Adjust for bank angle and pitch
-				float Roll = _Euler[0];
-				float Pitch = _Euler[1];
-				float Yaw = _Euler[2];
+				float Roll = atan2(zmag, ymag);
+				float Pitch = atan2(-zmag, xmag);
+				float Yaw = atan2(ymag, xmag);
 				
-		//Note that these lines are placeholders - we can do better with the magnetometer I think...	
-				float rollmag = atan2((-ymag*cos(Pitch) + xmag*sin(Pitch)), (zmag*cos(Yaw) + ymag*sin(Yaw)*sin(Pitch) + xmag*sin(Yaw)*cos(Pitch))); 
-			//	_magEuler[0] = constrainAngle180(rollmag - M_PI);  //need to offset this by pi
-			//	Roll = _magEuler[0];
+				if (acState.wingslevel >= 0.9f && acState.pitchlevel >= 0.9f)
+				{
+					magOffset[0] = Roll;
+					magOffset[1] = Pitch;
+					magOffset[2] = Yaw;
+				}
 				
-				float pitchmag = -atan2((-xmag*cos(Yaw) + ymag*sin(Yaw)), (zmag*cos(Roll) + xmag*sin(Roll)*sin(Yaw) + ymag*sin(Roll)*cos(Yaw))); 
-			//	_magEuler[1] = constrainAngle180(pitchmag - M_PI);  //need to offset this by pi
-			//	Pitch = _magEuler[1];
+				_magEuler[0] = Roll - magOffset[0];
+				//_magEuler[0] = constrainAngle360(_magEuler[0]);
+				_magEuler[1] = Pitch - magOffset[1]; // - magOffset[1];
+				//_magEuler[1] = constrainAngle360(_magEuler[1]);								
 				
-				float yawmag = -atan2((-zmag*cos(Roll) + xmag*sin(Roll)), (xmag*cos(Pitch) - zmag*sin(Pitch)*sin(Roll) + ymag*sin(Pitch)*cos(Roll))); 
-			//	_magEuler[2] = constrainAngle360(yawmag);
-			
+				X_h = xmag*cos(_Euler[1]) + ymag*sin(-_Euler[0])*sin(_Euler[1]) + zmag*cos(-_Euler[0])*sin(_Euler[1]);
+				Y_h = ymag*cos(-_Euler[0]) - zmag*sin(-_Euler[0]);
+				hdg = 0.0f;
+				hdg = atan2(Y_h, X_h);
+//				if(X_h < 0) hdg = M_PI - atang;
+//				if (X_h > 0 && Y_h < 0) hdg = -atan2(Y_h, X_h);
+//				if (X_h > 0 && Y_h > 0) hdg = (2*M_PI) - atan2(Y_h, X_h);
+//				if (X_h == 0 && Y_h < 0) hdg = M_PI / 4;
+//				if (X_h == 0 && Y_h > 0) hdg = 3* M_PI / 4;
+					
 				
-				//float rollmag = atan2((-ymag), (zmag)); 
-				_magEuler[0] = constrainAngle180(rollmag - M_PI);   //need to offset this by pi
-			//	Roll = _magEuler[0];
+				_magEuler[2] = constrainAngle360((2*M_PI)-hdg) ;
 				
-			//	float pitchmag = -atan2((-xmag ), (ymag)); 
-				_magEuler[1] = constrainAngle180(pitchmag - M_PI);   //need to offset this by pi
-			//	Pitch = _magEuler[1];
-				
-			//	float yawmag = -atan2((-zmag), (xmag)); 
+				//float txmag = xmag*cos(_Euler[1]) + zmag*sin(_Euler[1]);
+				//float tymag = ymag*cos(_Euler[0]) + ymag*sin(_Euler[0]);
+				//_magEuler[2] = constrainAngle360(atan2(tymag, txmag));
+		
 			
 				//  Need to correct these for bank angle
 			
-				float steer =  constrainAngle360(yawmag);
+					float steer =  0;//constrainAngle360(yawmag);
 				//_magEuler[2] = constrainAngle360(yawmag);
 				int i = 1;
 				bool found = false;
@@ -313,8 +324,8 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				}
 				
 				float ratio = (steer - steerTable[i - 1]) / (steerTable[i] - steerTable[i - 1]);
-				_magEuler[2] = (abs(forSteerTable[i] - forSteerTable[i - 1])* ratio) + forSteerTable[i - 1];
-				_magEuler[2] = constrainAngle360(yawmag);//_magEuler[2]);
+			//	_magEuler[2] = (abs(forSteerTable[i] - forSteerTable[i - 1])* ratio) + forSteerTable[i - 1];
+			//	_magEuler[2] = constrainAngle360(yawmag);//_magEuler[2]);
 								
 				dmagbuffer[0][magbufferindex] = (_magEuler[0] - magPrev[0]) / _dt ;
 				dmagbuffer[1][magbufferindex] = (_magEuler[1] - magPrev[1]) / _dt ;
@@ -335,12 +346,12 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				dmag[2] /= magbuffersize;
 				
 				//Set the axis still variables for initialization state
-				axisstill.magroll = 100 - (abs(dmag[0])*AXISSTILLMAGSCALAR);
-				axisstill.magpitch = 100 - (abs(dmag[1])*AXISSTILLMAGSCALAR);
-				axisstill.magyaw = 100 - (abs(dmag[2])*AXISSTILLMAGSCALAR);
+				axisstill.magroll = 100;// - (abs(dmag[0])*AXISSTILLMAGSCALAR);
+				axisstill.magpitch = 100;// - (abs(dmag[1])*AXISSTILLMAGSCALAR);
+				axisstill.magyaw = 100;// - (abs(dmag[2])*AXISSTILLMAGSCALAR);
 				if (axisstill.magroll < 0)axisstill.magroll = 0;
 				if (axisstill.magpitch < 0)axisstill.magpitch = 0;
-				if (axisstill.magyaw < 0)axisstill.magyaw = 0;
+				if (axisstill.magyaw < 0)axisstill.magyaw = 0;				
 				
 				magPrev[0] = _magEuler[0];
 				magPrev[1] = _magEuler[1];
@@ -449,15 +460,19 @@ bool SKFilter::update(float gx, float gy, float gz, float ax, float ay, float az
 				else _Euler_Fixed[1] += 0.05f * _dt;
 			}
 			
-			float fg[3] = { 1.0f, 1.0f, 1.0f };
-			float fm[3] = { 0.0f, 0.0f, 0.0f };
+			float fg[3] = { 1.0f, 1.0f, 0.0f };
+			float fm[3] = { 0.0f, 0.0f, 1.0f };
 			float fa[3] = { 0.0f, 0.0f, 0.0f };
-			
+
 			fg[1] = 1.0f - acState.pitchlevel;
-			fa[1] = acState.pitchlevel;
+			fa[1] = acState.pitchlevel / 2.0f;
+			fm[1] = acState.pitchlevel / 2.0f;
 			
 			fg[0] = 1.0f - (((1.0f - acState.turning) * 0.33f) + (acState.oneG * 0.33f) + (acState.wingslevel*0.33f));
 			fa[0] = (((1.0f - acState.turning) * 0.33f) + (acState.oneG * 0.33f) + (acState.wingslevel * 0.33f));
+
+			fg[2] = 1.0 - ((acState.pitchlevel) * 0.5 + (acState.wingslevel * 0.5));
+			fm[2] = ((acState.pitchlevel) * 0.5 + (acState.wingslevel * 0.5));
 			
 			//Don't need the "spring" with the fixed Euler with the current setup
 		
